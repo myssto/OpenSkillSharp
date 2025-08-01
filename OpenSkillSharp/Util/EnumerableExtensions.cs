@@ -24,12 +24,12 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    /// Retain the stochastic tenet of a sort to revert the original sort order
+    /// Retain the stochastic tenet of a sort to revert the original sort order.
     /// </summary>
-    /// <param name="tenet">A list of tenets for each object in the target list</param>
-    /// <param name="target">A list of objects to sort</param>
-    /// <typeparam name="T">Type of object to sort</typeparam>
-    /// <returns>Ordered objects and their tenets</returns>
+    /// <param name="tenet">A list of tenets for each object in the target list.</param>
+    /// <param name="target">A list of objects to sort.</param>
+    /// <typeparam name="T">Type of object to sort.</typeparam>
+    /// <returns>Ordered objects and their tenets.</returns>
     public static (IList<T> target, IList<double> tenet) Unwind<T>(this IList<double> tenet, IList<T> target)
     {
         if (tenet.Count == 0 || target.Count == 0 || tenet.Count != target.Count)

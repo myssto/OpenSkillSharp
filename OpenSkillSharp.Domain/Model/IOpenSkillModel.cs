@@ -1,7 +1,6 @@
-using OpenSkillSharp.Domain.Model;
 using OpenSkillSharp.Domain.Rating;
 
-namespace OpenSkillSharp.Models;
+namespace OpenSkillSharp.Domain.Model;
 
 public interface IOpenSkillModel
 {
