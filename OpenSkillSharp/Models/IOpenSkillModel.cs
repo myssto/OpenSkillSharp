@@ -101,9 +101,16 @@ public interface IOpenSkillModel
     );
 
     /// <summary>
-    /// Predict the likelihood of each team to win a match up against teams of one or more players.
+    /// Predict the likelihood of each team to win a match against teams of one or more players.
     /// </summary>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A list of numbers representing the odds of each team winning.</returns>
     public IEnumerable<double> PredictWin(IList<ITeam> teams);
+    
+    /// <summary>
+    /// Predict how likely a match of teams of one or more players will conclude in a draw.
+    /// </summary>
+    /// <param name="teams">A list of two or more teams.</param>
+    /// <returns>A number representing the odds of a draw as a percentage from 0.0 to 1.0</returns>
+    public double PredictDraw(IList<ITeam> teams);
 }

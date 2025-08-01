@@ -360,4 +360,30 @@ public class PlackettLuceTests
         
         Assert.Equal(1, probabilities.Sum(), 0.0001);
     }
+
+    [Fact]
+    public void PredictDraw()
+    {
+        var model = new PlackettLuce();
+
+        var probability = model.PredictDraw([
+            new Team { Players = [model.Rating(25, 1), model.Rating(25, 1)] },
+            new Team { Players = [model.Rating(25, 1), model.Rating(25, 1)] }
+        ]);
+        
+        Assert.Equal(0.2433180271619435, probability, 0.0000001);
+    }
+
+    [Fact]
+    public void PredictDraw_ProducesLowProbability_GivenUnevenTeams()
+    {
+        var model = new PlackettLuce();
+
+        var probability = model.PredictDraw([
+            new Team { Players = [model.Rating(35, 1), model.Rating(35, 1)] },
+            new Team { Players = [model.Rating(35, 1), model.Rating(35, 1), model.Rating(35, 1)] }
+        ]);
+        
+        Assert.Equal(0.0002807397636509501, probability, 0.0000001);
+    }
 }

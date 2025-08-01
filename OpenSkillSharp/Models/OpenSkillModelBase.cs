@@ -153,7 +153,27 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                 )) / denominator
         );
     }
-    
+
+    public double PredictDraw(IList<ITeam> teams)
+    {
+        var teamRatings = CalculateTeamRatings(teams).ToList();
+        
+        var playerCount = teamRatings.SelectMany(t => t.Players).Count();
+        var drawProbability = 1D / playerCount;
+        var drawMargin = Math.Sqrt(playerCount) * Beta * Statistics.InversePhiMajor((1 + drawProbability) / 2D);
+
+        return teamRatings.SelectMany((teamA, i) =>
+            teamRatings
+                .Skip(i + 1)
+                .Select(teamB =>
+                {
+                    var denominator = Math.Sqrt(playerCount * BetaSq + teamA.SigmaSq + teamB.SigmaSq);
+                    return Statistics.PhiMajor((drawMargin - teamA.Mu + teamB.Mu) / denominator)
+                           - Statistics.PhiMajor((teamB.Mu - teamA.Mu - drawMargin) / denominator);
+                })
+        ).Average();
+    }
+
     public IEnumerable<ITeamRating> CalculateTeamRatings(
         IList<ITeam> teams,
         IList<double>? ranks = null
