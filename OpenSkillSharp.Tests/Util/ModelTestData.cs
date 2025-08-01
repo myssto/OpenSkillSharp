@@ -80,7 +80,7 @@ public class ModelTestData
     private static IList<ITeam> ConvertDictionaryData(Dictionary<string, List<TestData>> data) =>
         data.Select(kvp => new Team
         {
-            Players = kvp.Value.Select(d => new Rating.Rating
+            Players = kvp.Value.Select(d => new OpenSkillSharp.Rating.Rating
             {
                 Mu = d.Mu,
                 Sigma = d.Sigma

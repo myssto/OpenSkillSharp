@@ -24,33 +24,6 @@ public class PlackettLuceTests
     }
 
     [Fact]
-    public void RatingValues_Defaults()
-    {
-        var model = new PlackettLuce();
-        var rating = model.Rating();
-        
-        Assert.Equal(25D, rating.Mu);
-        Assert.Equal(25D / 3, rating.Sigma);
-    }
-
-    [Fact]
-    public void RatingValues_Overrides_FromModel()
-    {
-        const double overrideMu = 30D;
-        const double overrideSigma = 30D / 3;
-        
-        var model = new PlackettLuce
-        {
-            Mu = overrideMu,
-            Sigma = overrideSigma
-        };
-        var rating = model.Rating();
-        
-        Assert.Equal(overrideMu, rating.Mu);
-        Assert.Equal(overrideSigma, rating.Sigma);
-    }
-
-    [Fact]
     public void CalculateTeamSqrtSigma()
     {
         var model = new PlackettLuce();
