@@ -1,4 +1,3 @@
-using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
 using OpenSkillSharp.Tests.Util;
@@ -314,5 +313,51 @@ public class PlackettLuceTests
         
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
+    }
+
+    [Fact]
+    public void PredictWin()
+    {
+        var model = new PlackettLuce();
+        var teamOne = new Team
+        {
+            Players =
+            [
+                model.Rating(),
+                model.Rating(32.444, 5.123)
+            ]
+        };
+        var teamTwo = new Team
+        {
+            Players =
+            [
+                model.Rating(73.381, 1.421),
+                model.Rating(25.188, 6.211)
+            ]
+        };
+
+        var probabilities = model.PredictWin([teamOne, teamTwo]);
+        
+        Assert.Equal(1, probabilities.Sum(), 0.0001);
+    }
+
+    [Fact]
+    public void PredictWin_5Teams()
+    {
+        var model = new PlackettLuce();
+        var a1 = model.Rating();
+        var a2 = model.Rating(32.444, 5.123);
+        var b1 = model.Rating(73.381, 1.421);
+        var b2 = model.Rating(25.188, 6.211);
+
+        var probabilities = model.PredictWin([
+            new Team { Players = [a1, a2] },
+            new Team { Players = [b1, b2] },
+            new Team { Players = [a2] },
+            new Team { Players = [a1] },
+            new Team { Players = [b1] }
+        ]);
+        
+        Assert.Equal(1, probabilities.Sum(), 0.0001);
     }
 }

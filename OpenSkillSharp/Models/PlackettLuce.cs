@@ -147,6 +147,20 @@ public class PlackettLuce : IOpenSkillModel
         return finalResult;
     }
 
+    public IEnumerable<double> PredictWin(IList<ITeam> teams)
+    {
+        var teamRatings = CalculateTeamRatings(teams).ToList();
+        var n = teams.Count;
+        var denominator = n * (n - 1) / 2;
+
+        return teamRatings.Select((teamA, idx) => teamRatings
+            .Where((_, idy) => idx != idy)
+            .Sum(teamB => Statistics.PhiMajor(
+                (teamA.Mu - teamB.Mu) / Math.Sqrt(n * BetaSq + teamA.SigmaSq + teamB.SigmaSq)
+            )) / denominator
+        );
+    }
+
     private IEnumerable<ITeam> Compute(
         IList<ITeam> teams,
         IList<double>? ranks = null,
