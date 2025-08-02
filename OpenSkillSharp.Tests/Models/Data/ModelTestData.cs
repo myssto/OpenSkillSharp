@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Rating;
 
-namespace OpenSkillSharp.Tests.Util;
+namespace OpenSkillSharp.Tests.Models.Data;
 
 public class ModelTestData
 {
@@ -66,7 +66,7 @@ public class ModelTestData
     public static ModelTestData FromJson(string model)
     {
         var asmDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        var dataPath = Path.Combine(asmDir ?? "", "Data", $"{model}.json");
+        var dataPath = Path.Combine(asmDir ?? "", "Models", "Data", $"{model}.json");
 
         if (!File.Exists(dataPath))
         {
@@ -86,4 +86,11 @@ public class ModelTestData
                 Sigma = d.Sigma
             })
         }).Cast<ITeam>().ToList();
+    
+    public class TestData
+    {
+        public double Mu { get; set; }
+    
+        public double Sigma { get; set; }
+    }
 }

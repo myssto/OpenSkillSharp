@@ -25,7 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Data\plackettluce.json">
+      <None Update="Models\Data\plackettluce.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>

@@ -3,7 +3,7 @@ using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Rating;
 using OpenSkillSharp.Util;
 
-namespace OpenSkillSharp.Models;
+namespace OpenSkillSharp;
 
 public abstract class OpenSkillModelBase : IOpenSkillModel
 {

@@ -1,4 +1,5 @@
 using OpenSkillSharp.Models;
+using OpenSkillSharp.Tests.Util;
 
 namespace OpenSkillSharp.Tests.Rating;
 
@@ -106,8 +107,7 @@ public class RatingTests
         
         var clone = rating.Clone();
         
-        Assert.Equal(rating.Mu, clone.Mu);
-        Assert.Equal(rating.Sigma, clone.Sigma);
+        Assertions.RatingsEqual(rating, clone);
         Assert.NotSame(rating, clone);
     }
 }

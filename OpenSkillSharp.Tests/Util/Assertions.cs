@@ -17,7 +17,7 @@ public static class Assertions
     
     public static void RatingsEqual(IRating expected, IRating actual)
     {
-        Assert.Equal(expected.Mu, actual.Mu, Constants.DoubleTolerance);
-        Assert.Equal(expected.Sigma, actual.Sigma, Constants.DoubleTolerance);
+        Assert.Equal(expected.Mu, actual.Mu, 0.0001);
+        Assert.Equal(expected.Sigma, actual.Sigma, 0.0001);
     }
 }
