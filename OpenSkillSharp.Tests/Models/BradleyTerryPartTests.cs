@@ -1,13 +1,14 @@
 using OpenSkillSharp.Models;
+using OpenSkillSharp.Rating;
 using OpenSkillSharp.Tests.Models.Data;
 using OpenSkillSharp.Tests.Util;
 
 namespace OpenSkillSharp.Tests.Models;
 
-public class PlackettLuceTests
+public class BradleyTerryPartTests
 {
-    private readonly ModelTestData _testData = ModelTestData.FromJson("plackettluce");
-    private PlackettLuce TestModel => new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma };
+    private readonly ModelTestData _testData = ModelTestData.FromJson("bradleyterrypart");
+    private BradleyTerryPart TestModel => new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma };
     
     [Fact]
     public void Rate_Normal()
@@ -62,7 +63,7 @@ public class PlackettLuceTests
     {
         // Arrange
         var expectedRatings = _testData.Margins;
-        var marginTestModel = new PlackettLuce
+        var marginTestModel = new BradleyTerryPart
         {
             Mu = _testData.Model.Mu,
             Sigma = _testData.Model.Sigma,
@@ -86,7 +87,7 @@ public class PlackettLuceTests
     {
         // Arrange
         var expectedRatings = _testData.LimitSigma;
-        var limitSigmaTestModel = new PlackettLuce
+        var limitSigmaTestModel = new BradleyTerryPart
         {
             Mu = _testData.Model.Mu,
             Sigma = _testData.Model.Sigma,
@@ -144,7 +145,7 @@ public class PlackettLuceTests
     {
         // Arrange
         var expectedRatings = _testData.Balance;
-        var balanceModel = new PlackettLuce
+        var balanceModel = new BradleyTerryPart
         {
             Mu = _testData.Model.Mu,
             Sigma = _testData.Model.Sigma,
@@ -160,5 +161,32 @@ public class PlackettLuceTests
         
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
+    }
+
+    [Fact]
+    public void Rate_WindowSize0_Tau0()
+    {
+        // Arrange
+        var windowTauModel = new BradleyTerryPart
+        {
+            Mu = _testData.Model.Mu,
+            Sigma = _testData.Model.Sigma,
+            Tau = 0,
+            WindowSize = 0
+        };
+        var playerA = windowTauModel.Rating();
+        var playerB = windowTauModel.Rating();
+        
+        // Act
+        var results = windowTauModel.Rate(
+            [
+                new Team { Players = [playerA] },
+                new Team { Players = [playerB] }
+            ]
+        ).ToList();
+        
+        // Assert
+        Assertions.RatingsEqual(playerA, results.ElementAt(0).Players.ElementAt(0));
+        Assertions.RatingsEqual(playerB, results.ElementAt(1).Players.ElementAt(0));
     }
 }
