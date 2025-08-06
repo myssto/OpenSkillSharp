@@ -210,65 +210,61 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     public double CalculateTeamSqrtSigma(IList<ITeamRating> teamRatings) =>
         Math.Sqrt(teamRatings.Select(t => t.SigmaSq + BetaSq).Sum());
     
+    /// <summary>
+    /// Sum up all values of (mu / c)^e
+    /// </summary>
+    /// <param name="teamRatings">A list of team ratings in a game.</param>
+    /// <param name="c">The square root of the collective team sigma.</param>
+    /// <param name="scores">Optional scores for margin factor calculation.</param>
+    /// <returns>A list of numbers representing the SumQ for each team</returns>
     public IEnumerable<double> CalculateSumQ(
         IList<ITeamRating> teamRatings, 
         double c, 
         IList<double>? scores = null
     )
     {
-        var sumQ = new Dictionary<int, double>();
-        
-        foreach (var (teamIdx, teamX) in teamRatings.Index())
-        {
-            var adjustedMu = teamX.Mu;
-
-            if (scores is not null && scores.Count == teamRatings.Count)
-            {
-                var marginAdjustment = 0D;
-                var comparisonCount = 0;
-
-                foreach (var (teamIdy, teamY) in teamRatings.Index())
+        // Calculate margin adjustment for team mu values if ranks are provided
+        var adjustedMus = scores?.Count == teamRatings.Count
+            ? teamRatings
+                .Select((qTeam, qTeamIndex) =>
                 {
-                    if (teamIdx == teamIdy)
-                    {
-                        continue;
-                    }
-
-                    var scoreDiff = Math.Abs(scores.ElementAt(teamIdx) - scores.ElementAt(teamIdy));
-                    if (scoreDiff <= 0)
-                    {
-                        continue;
-                    }
-
-                    var marginFactor = scoreDiff > Margin && Margin > 0
-                        ? Math.Log(1 + scoreDiff / Margin)
-                        : 1D;
+                    var adjustedMu = qTeam.Mu;
+                    var qTeamScore = scores[qTeamIndex];
                     
-                    var skillDiff = teamX.Mu - teamY.Mu;
-                    var direction = scores.ElementAt(teamIdx) > scores.ElementAt(teamIdy) 
-                        ? 1D 
-                        : -1D;
+                    adjustedMu += teamRatings
+                        .Where((_, iTeamIndex) =>
+                            qTeamIndex != iTeamIndex
+                            && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
+                        )
+                        .Select((iTeam, iTeamIndex) =>
+                        {
+                            var iTeamScore = scores[iTeamIndex];
+                            var direction = qTeamScore > iTeamScore ? 1D : -1D;
+                            var scoreDiff = Math.Abs(qTeamScore - iTeamScore);
+                            var marginFactor = scoreDiff > Margin && Margin > 0
+                                ? Math.Log(1 + scoreDiff / Margin)
+                                : 1D;
 
-                    marginAdjustment += skillDiff * (marginFactor - 1) * direction;
-                    comparisonCount++;
-                }
-                
-                adjustedMu += comparisonCount > 0 ? marginAdjustment / comparisonCount : 0;
-            }
-            
-            var summed = Math.Exp(adjustedMu / c);
-            foreach (var (teamIdy, teamY) in teamRatings.Index())
+                            return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * direction;
+                        })
+                        .Average();
+                    
+                    return (qTeamIndex, adjustedMu);
+                })
+                .ToDictionary()
+            : new Dictionary<int, double>();
+
+        return teamRatings.Select(qTeam => teamRatings
+            .Where((iTeam, _) => iTeam.Rank >= qTeam.Rank)
+            .Select((iTeam, iTeamIndex) =>
             {
-                if (teamX.Rank >= teamY.Rank)
-                {
-                    sumQ[teamIdy] = sumQ.TryGetValue(teamIdy, out var current) 
-                        ? current + summed 
-                        : summed;
-                }
-            }
-        }
-        
-        return sumQ.OrderBy(kvp => kvp.Key).Select(kvp => kvp.Value);
+                var iTeamMu = adjustedMus.TryGetValue(iTeamIndex, out var iTeamAdjustedMu)
+                    ? iTeamAdjustedMu
+                    : iTeam.Mu;
+                
+                return Math.Exp(iTeamMu / c);
+            }).Sum()
+        );
     }
     
     protected static double DefaultGamma(
