@@ -239,10 +239,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             ? teamRatings
                 .Select((qTeam, qTeamIndex) =>
                 {
-                    var adjustedMu = qTeam.Mu;
                     var qTeamScore = scores[qTeamIndex];
-                    
-                    adjustedMu += teamRatings
+                    var muAdjustment = teamRatings
                         .Where((_, iTeamIndex) =>
                             qTeamIndex != iTeamIndex
                             && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
@@ -259,20 +257,21 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                             return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * direction;
                         })
                         .Average();
-                    
-                    return (qTeamIndex, adjustedMu);
+                
+                    return (qTeamIndex, qTeam.Mu + muAdjustment);
                 })
                 .ToDictionary()
             : new Dictionary<int, double>();
 
         return teamRatings.Select(qTeam => teamRatings
-            .Where((iTeam, _) => iTeam.Rank >= qTeam.Rank)
-            .Select((iTeam, iTeamIndex) =>
+            .Select((iTeam, iTeamIndex) => (iTeam, iTeamIndex))
+            .Where(x => x.iTeam.Rank >= qTeam.Rank)
+            .Select(x =>
             {
-                var iTeamMu = adjustedMus.TryGetValue(iTeamIndex, out var iTeamAdjustedMu)
+                var iTeamMu = adjustedMus.TryGetValue(x.iTeamIndex, out var iTeamAdjustedMu)
                     ? iTeamAdjustedMu
-                    : iTeam.Mu;
-                
+                    : x.iTeam.Mu;
+            
                 return Math.Exp(iTeamMu / c);
             }).Sum()
         );
