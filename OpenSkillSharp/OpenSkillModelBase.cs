@@ -174,6 +174,14 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         ).Average();
     }
 
+    /// <summary>
+    /// Creates team ratings for a game.
+    /// </summary>
+    /// <param name="teams">A list of teams in a game.</param>
+    /// <param name="ranks">
+    /// An optional list of numbers representing a rank for each team of <paramref name="teams"/>.
+    /// </param>
+    /// <returns>A list of team ratings.</returns>
     public IEnumerable<ITeamRating> CalculateTeamRatings(
         IList<ITeam> teams,
         IList<double>? ranks = null
@@ -181,28 +189,28 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     {
         ranks ??= teams.CalculateRankings().ToList();
 
-        return teams.Select((team, teamIdx) =>
+        return teams.Select((team, index) =>
         {
             var maxOrdinal = team.Players.Max(p => p.Ordinal);
-            var sumMu = 0D;
-            var sumSigmaSq = 0D;
+            var (sumMu, sumSigmaSq) = team.Players
+                .Aggregate((mu: 0D, sigmaSq: 0D), (acc, player) =>
+                {
+                    var balanceWeight = Balance
+                        ? 1 + (maxOrdinal - player.Ordinal) / (maxOrdinal + Kappa)
+                        : 1D;
 
-            foreach (var player in team.Players)
-            {
-                var balanceWeight = Balance
-                    ? 1 + (maxOrdinal - player.Ordinal) / (maxOrdinal + Kappa)
-                    : 1D;
-                
-                sumMu += player.Mu * balanceWeight;
-                sumSigmaSq += Math.Pow(player.Sigma * balanceWeight, 2);
-            }
+                    return (
+                        mu: acc.mu + player.Mu * balanceWeight,
+                        sigmaSq: acc.sigmaSq + Math.Pow(player.Sigma * balanceWeight, 2)
+                    );
+                });
 
             return new TeamRating
             {
                 Players = team.Players,
                 Mu = sumMu,
                 SigmaSq = sumSigmaSq,
-                Rank = (int)ranks[teamIdx]
+                Rank = (int)ranks[index]
             };
         });
     }
@@ -215,7 +223,10 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     /// </summary>
     /// <param name="teamRatings">A list of team ratings in a game.</param>
     /// <param name="c">The square root of the collective team sigma.</param>
-    /// <param name="scores">Optional scores for margin factor calculation.</param>
+    /// <param name="scores">
+    /// An optional list of numbers representing a score for each team of <paramref name="teamRatings"/> used
+    /// in margin factor calculation.
+    /// </param>
     /// <returns>A list of numbers representing the SumQ for each team</returns>
     public IEnumerable<double> CalculateSumQ(
         IList<ITeamRating> teamRatings, 
