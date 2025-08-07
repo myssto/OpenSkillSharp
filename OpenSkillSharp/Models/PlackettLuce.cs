@@ -33,18 +33,19 @@ public class PlackettLuce : OpenSkillModelBase
             (double omega, double delta) = teamRatings
                 .Select((qTeam, qTeamIndex) => (qTeam, qTeamIndex))
                 .Where(x => x.qTeam.Rank <= iTeam.Rank)
-                .Aggregate((sumOmega: 0D, sumDelta: 0D), (acc, x) =>
+                .Aggregate((sumOmega: 0D, sumDelta: 0D), (acc, q) =>
                 {
-                    double iMuOverCeOverSumQ = iMuOverC / sumQ[x.qTeamIndex];
+                    (ITeamRating _, int qTeamIndex) = q;
+                    double iMuOverCeOverSumQ = iMuOverC / sumQ[qTeamIndex];
 
                     return (
                         sumOmega: acc.sumOmega + (
-                            iTeamIndex == x.qTeamIndex
-                                ? 1 - (iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex])
-                                : -1 * iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex]
+                            iTeamIndex == qTeamIndex
+                                ? 1 - (iMuOverCeOverSumQ / rankOccurrences[qTeamIndex])
+                                : -1 * iMuOverCeOverSumQ / rankOccurrences[qTeamIndex]
                         ),
                         sumDelta: acc.sumDelta +
-                                  (iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[x.qTeamIndex])
+                                  (iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[qTeamIndex])
                     );
                 });
 
@@ -65,13 +66,13 @@ public class PlackettLuce : OpenSkillModelBase
             {
                 IRating modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
                 double weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
-                double scalar = omega >= 0
+                double weightScalar = omega >= 0
                     ? weight
                     : 1 / weight;
 
-                modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega * scalar;
+                modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega * weightScalar;
                 modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
-                    1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * scalar),
+                    1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * weightScalar),
                     Kappa
                 ));
 

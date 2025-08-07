@@ -80,13 +80,14 @@ public class BradleyTerryPart : OpenSkillModelBase
                 {
                     IRating modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
                     double weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
-                    double scalar = omega >= 0
+                    double weightScalar = omega >= 0
                         ? weight
                         : 1 / weight;
 
-                    modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega * scalar;
+                    modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega *
+                                         weightScalar;
                     modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
-                        1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * scalar),
+                        1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * weightScalar),
                         Kappa
                     ));
 
