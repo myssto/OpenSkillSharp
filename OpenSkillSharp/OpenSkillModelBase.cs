@@ -15,27 +15,26 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     public double Sigma { get; set; } = 25D / 3;
 
     public double Beta { get; set; } = 25D / 6;
-    
+
     public double BetaSq => Math.Pow(Beta, 2);
-    
+
     public double Kappa { get; set; } = 0.0001;
-    
+
     public GammaFactory Gamma { get; set; } = DefaultGamma;
-    
+
     public double Tau { get; set; } = 25D / 300;
 
     public double Margin { get; set; }
-    
+
     public bool LimitSigma { get; set; }
-    
+
     public bool Balance { get; set; }
-    
-    public IRating Rating(double? mu = null, double? sigma = null) => new Rating.Rating
+
+    public IRating Rating(double? mu = null, double? sigma = null)
     {
-        Mu = mu ?? Mu,
-        Sigma = sigma ?? Sigma,
-    };
-    
+        return new Rating.Rating { Mu = mu ?? Mu, Sigma = sigma ?? Sigma };
+    }
+
     public IEnumerable<ITeam> Rate(
         IList<ITeam> teams,
         IList<double>? ranks = null,
@@ -48,7 +47,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         {
             if (!ranks.IsEqualLengthTo(teams))
             {
-                throw new ArgumentException($"Arguments '{nameof(ranks)}' and '{nameof(teams)}' must be of equal length.");
+                throw new ArgumentException(
+                    $"Arguments '{nameof(ranks)}' and '{nameof(teams)}' must be of equal length.");
             }
 
             if (scores is not null)
@@ -68,28 +68,30 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         {
             if (!weights.IsEqualLengthTo(teams))
             {
-                throw new ArgumentException($"Arguments '{nameof(weights)}' and '{nameof(teams)}' must be of equal length.");
+                throw new ArgumentException(
+                    $"Arguments '{nameof(weights)}' and '{nameof(teams)}' must be of equal length.");
             }
 
-            for (var i = 0; i < weights.Count; i++)
+            for (int i = 0; i < weights.Count; i++)
             {
                 if (!weights[i].IsEqualLengthTo(teams[i].Players))
                 {
-                    throw new ArgumentException($"Size of team weights at index {i} does not match the size of the team.");
+                    throw new ArgumentException(
+                        $"Size of team weights at index {i} does not match the size of the team.");
                 }
             }
         }
-        
+
         // Create a deep copy of the given teams
-        var originalTeams = teams;
+        IList<ITeam> originalTeams = teams;
         teams = originalTeams.Select(t => t.Clone()).ToList();
 
         // Correct sigma
         tau ??= Tau;
-        var tauSq = Math.Pow(tau.Value, 2);
-        foreach (var player in teams.SelectMany(t => t.Players))
+        double tauSq = Math.Pow(tau.Value, 2);
+        foreach (IRating player in teams.SelectMany(t => t.Players))
         {
-            player.Sigma = Math.Sqrt(player.Sigma * player.Sigma + tauSq);
+            player.Sigma = Math.Sqrt((player.Sigma * player.Sigma) + tauSq);
         }
 
         // Convert score to ranks
@@ -97,14 +99,14 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         {
             ranks = teams.CalculateRankings(scores.Select(s => -s).ToList()).ToList();
         }
-        
+
         // Normalize weights
         weights = weights?.Select(w => w.Normalize(1, 2)).ToList();
 
         IList<double>? tenet = null;
         if (ranks is not null)
         {
-            var (orderedTeams, orderedRanks) = ranks.Unwind(teams);
+            (IList<ITeam> orderedTeams, IList<double> orderedRanks) = ranks.Unwind(teams);
 
             if (weights is not null)
             {
@@ -125,52 +127,52 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         {
             finalResult = Compute(teams, weights: weights).ToList();
         }
-        
+
         if (LimitSigma)
         {
-            foreach (var (teamIdx, team) in finalResult.Index())
+            foreach ((int teamIdx, ITeam team) in finalResult.Index())
             {
-                foreach (var (playerIdx, player) in team.Players.Index())
+                foreach ((int playerIdx, IRating player) in team.Players.Index())
                 {
                     player.Sigma = Math.Min(
-                        player.Sigma, 
+                        player.Sigma,
                         originalTeams.ElementAt(teamIdx).Players.ElementAt(playerIdx).Sigma
                     );
                 }
             }
         }
-        
+
         return finalResult;
     }
-    
+
     public IEnumerable<double> PredictWin(IList<ITeam> teams)
     {
-        var teamRatings = CalculateTeamRatings(teams).ToList();
-        var n = teams.Count;
-        var denominator = n * (n - 1) / 2;
+        List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
+        int n = teams.Count;
+        int denominator = n * (n - 1) / 2;
 
         return teamRatings.Select((teamA, idx) => teamRatings
                 .Where((_, idy) => idx != idy)
                 .Sum(teamB => Statistics.PhiMajor(
-                    (teamA.Mu - teamB.Mu) / Math.Sqrt(n * BetaSq + teamA.SigmaSq + teamB.SigmaSq)
+                    (teamA.Mu - teamB.Mu) / Math.Sqrt((n * BetaSq) + teamA.SigmaSq + teamB.SigmaSq)
                 )) / denominator
         );
     }
 
     public double PredictDraw(IList<ITeam> teams)
     {
-        var teamRatings = CalculateTeamRatings(teams).ToList();
-        
-        var playerCount = teamRatings.SelectMany(t => t.Players).Count();
-        var drawProbability = 1D / playerCount;
-        var drawMargin = Math.Sqrt(playerCount) * Beta * Statistics.InversePhiMajor((1 + drawProbability) / 2D);
+        List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
+
+        int playerCount = teamRatings.SelectMany(t => t.Players).Count();
+        double drawProbability = 1D / playerCount;
+        double drawMargin = Math.Sqrt(playerCount) * Beta * Statistics.InversePhiMajor((1 + drawProbability) / 2D);
 
         return teamRatings.SelectMany((teamA, i) =>
             teamRatings
                 .Skip(i + 1)
                 .Select(teamB =>
                 {
-                    var denominator = Math.Sqrt(playerCount * BetaSq + teamA.SigmaSq + teamB.SigmaSq);
+                    double denominator = Math.Sqrt((playerCount * BetaSq) + teamA.SigmaSq + teamB.SigmaSq);
                     return Statistics.PhiMajor((drawMargin - teamA.Mu + teamB.Mu) / denominator)
                            - Statistics.PhiMajor((teamB.Mu - teamA.Mu - drawMargin) / denominator);
                 })
@@ -194,38 +196,37 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
         return teams.Select((team, index) =>
         {
-            var maxOrdinal = team.Players.Max(p => p.Ordinal);
-            var (sumMu, sumSigmaSq) = team.Players
+            double maxOrdinal = team.Players.Max(p => p.Ordinal);
+            (double sumMu, double sumSigmaSq) = team.Players
                 .Aggregate((mu: 0D, sigmaSq: 0D), (acc, player) =>
                 {
-                    var balanceWeight = Balance
-                        ? 1 + (maxOrdinal - player.Ordinal) / (maxOrdinal + Kappa)
+                    double balanceWeight = Balance
+                        ? 1 + ((maxOrdinal - player.Ordinal) / (maxOrdinal + Kappa))
                         : 1D;
 
                     return (
-                        mu: acc.mu + player.Mu * balanceWeight,
+                        mu: acc.mu + (player.Mu * balanceWeight),
                         sigmaSq: acc.sigmaSq + Math.Pow(player.Sigma * balanceWeight, 2)
                     );
                 });
 
             return new TeamRating
             {
-                Players = team.Players,
-                Mu = sumMu,
-                SigmaSq = sumSigmaSq,
-                Rank = (int)ranks[index]
+                Players = team.Players, Mu = sumMu, SigmaSq = sumSigmaSq, Rank = (int)ranks[index]
             };
         });
     }
-    
+
     /// <summary>
     /// Calculate the square root of the collective team sigma.
     /// </summary>
     /// <param name="teamRatings">A list of team ratings in a game.</param>
     /// <returns>A number representing the square root of the collective team sigma.</returns>
-    public double CalculateTeamSqrtSigma(IList<ITeamRating> teamRatings) =>
-        Math.Sqrt(teamRatings.Select(t => t.SigmaSq + BetaSq).Sum());
-    
+    public double CalculateTeamSqrtSigma(IList<ITeamRating> teamRatings)
+    {
+        return Math.Sqrt(teamRatings.Select(t => t.SigmaSq + BetaSq).Sum());
+    }
+
     /// <summary>
     /// Sum up all values of (mu / c)^e
     /// </summary>
@@ -237,13 +238,13 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     /// </param>
     /// <returns>A list of numbers representing the SumQ for each team</returns>
     public IEnumerable<double> CalculateSumQ(
-        IList<ITeamRating> teamRatings, 
-        double c, 
+        IList<ITeamRating> teamRatings,
+        double c,
         IList<double>? scores = null
     )
     {
         // Calculate margin adjustment for team mu values if ranks are provided
-        var adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
+        List<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
 
         return teamRatings.Select(qTeam => teamRatings
             .Select((iTeam, iTeamIndex) => (iTeam, iTeamIndex))
@@ -265,19 +266,19 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         return teamRatings
             .Select((qTeam, qTeamIndex) =>
             {
-                var qTeamScore = scores[qTeamIndex];
-                var muAdjustment = teamRatings
+                double qTeamScore = scores[qTeamIndex];
+                double muAdjustment = teamRatings
                     .Where((_, iTeamIndex) =>
                         qTeamIndex != iTeamIndex
                         && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
                     )
                     .Select((iTeam, iTeamIndex) =>
                     {
-                        var iTeamScore = scores[iTeamIndex];
-                        var direction = qTeamScore > iTeamScore ? 1D : -1D;
-                        var scoreDiff = Math.Abs(qTeamScore - iTeamScore);
-                        var marginFactor = scoreDiff > Margin && Margin > 0
-                            ? Math.Log(1 + scoreDiff / Margin)
+                        double iTeamScore = scores[iTeamIndex];
+                        double direction = qTeamScore > iTeamScore ? 1D : -1D;
+                        double scoreDiff = Math.Abs(qTeamScore - iTeamScore);
+                        double marginFactor = scoreDiff > Margin && Margin > 0
+                            ? Math.Log(1 + (scoreDiff / Margin))
                             : 1D;
 
                         return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * direction;
@@ -294,37 +295,40 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         IEnumerable<ITeam> processedTeams
     )
     {
-        var processedTeamsList = processedTeams.ToList();
-        var rankGroups = teamRatings
+        List<ITeam> processedTeamsList = processedTeams.ToList();
+        Dictionary<int, List<int>> rankGroups = teamRatings
             .Select((tr, i) => new { tr.Rank, Index = i })
             .GroupBy(x => x.Rank)
             .ToDictionary(g => g.Key, g => g.Select(x => x.Index).ToList());
-        
-        foreach (var teamIndices in rankGroups.Values.Where(g => g.Count > 1))
+
+        foreach (List<int> teamIndices in rankGroups.Values.Where(g => g.Count > 1))
         {
-            var avgMuChange = teamIndices.Average(i => 
+            double avgMuChange = teamIndices.Average(i =>
                 processedTeamsList[i].Players.First().Mu - originalTeams[i].Players.First().Mu
             );
-    
-            foreach (var teamIndex in teamIndices)
+
+            foreach (int teamIndex in teamIndices)
             {
-                foreach (var (playerIndex, player) in processedTeamsList[teamIndex].Players.Index())
+                foreach ((int playerIndex, IRating player) in processedTeamsList[teamIndex].Players.Index())
                 {
                     player.Mu = originalTeams[teamIndex].Players.ElementAt(playerIndex).Mu + avgMuChange;
                 }
             }
         }
     }
-    
+
     protected static double DefaultGamma(
-        double c, 
-        double k, 
-        double mu, 
-        double sigmaSq, 
-        IEnumerable<IRating> team, 
-        double qRank, 
+        double c,
+        double k,
+        double mu,
+        double sigmaSq,
+        IEnumerable<IRating> team,
+        double qRank,
         IEnumerable<double>? weights
-    ) => Math.Sqrt(sigmaSq) / c;
+    )
+    {
+        return Math.Sqrt(sigmaSq) / c;
+    }
 
     /// <summary>
     /// Computes the updated ratings for a list of teams in a game.

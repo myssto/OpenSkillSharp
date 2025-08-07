@@ -20,68 +20,69 @@ public class PlackettLuce : OpenSkillModelBase
         IList<IList<double>>? weights = null
     )
     {
-        var teamRatings = CalculateTeamRatings(teams, ranks).ToList();
-        var c = CalculateTeamSqrtSigma(teamRatings);
-        var sumQ = CalculateSumQ(teamRatings, c, ranks).ToList();
-        var rankOccurrences = teamRatings.CountRankOccurrences().ToList();
-        var adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
-    
-        var result = teamRatings.Select((iTeam, iTeamIndex) =>
+        List<ITeamRating> teamRatings = CalculateTeamRatings(teams, ranks).ToList();
+        double c = CalculateTeamSqrtSigma(teamRatings);
+        List<double> sumQ = CalculateSumQ(teamRatings, c, ranks).ToList();
+        List<int> rankOccurrences = teamRatings.CountRankOccurrences().ToList();
+        List<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
+
+        List<Team> result = teamRatings.Select((iTeam, iTeamIndex) =>
         {
             // Calculate omega and delta
-            var iMuOverC = Math.Exp(adjustedMus[iTeamIndex] / c);
-            var (omega, delta) = teamRatings
+            double iMuOverC = Math.Exp(adjustedMus[iTeamIndex] / c);
+            (double omega, double delta) = teamRatings
                 .Select((qTeam, qTeamIndex) => (qTeam, qTeamIndex))
                 .Where(x => x.qTeam.Rank <= iTeam.Rank)
                 .Aggregate((sumOmega: 0D, sumDelta: 0D), (acc, x) =>
                 {
-                    var iMuOverCeOverSumQ = iMuOverC / sumQ[x.qTeamIndex];
-    
+                    double iMuOverCeOverSumQ = iMuOverC / sumQ[x.qTeamIndex];
+
                     return (
                         sumOmega: acc.sumOmega + (
-                            iTeamIndex == x.qTeamIndex 
-                                ? 1 - iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex]
+                            iTeamIndex == x.qTeamIndex
+                                ? 1 - (iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex])
                                 : -1 * iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex]
                         ),
-                        sumDelta: acc.sumDelta + iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[x.qTeamIndex]
+                        sumDelta: acc.sumDelta +
+                                  (iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[x.qTeamIndex])
                     );
                 });
-    
+
             omega *= iTeam.SigmaSq / c;
             delta *= iTeam.SigmaSq / Math.Pow(c, 2);
             delta *= Gamma(
-                c, 
-                teamRatings.Count, 
-                iTeam.Mu, 
-                iTeam.SigmaSq, 
+                c,
+                teamRatings.Count,
+                iTeam.Mu,
+                iTeam.SigmaSq,
                 iTeam.Players,
-                iTeam.Rank, 
+                iTeam.Rank,
                 weights?.ElementAtOrDefault(iTeamIndex)
             );
-    
+
             // Adjust player ratings
-            var modifiedTeam = iTeam.Players.Select((_, jPlayerIndex) =>
+            List<IRating> modifiedTeam = iTeam.Players.Select((_, jPlayerIndex) =>
             {
-                var modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
-                var weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
-                var scalar = omega >= 0 
-                    ? weight 
+                IRating modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
+                double weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
+                double scalar = omega >= 0
+                    ? weight
                     : 1 / weight;
-                
+
                 modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega * scalar;
                 modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
-                    1 - modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * scalar,
+                    1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * scalar),
                     Kappa
                 ));
-                
+
                 return modifiedPlayer;
             }).ToList();
-            
+
             return new Team { Players = modifiedTeam };
         }).ToList();
-        
+
         AdjustPlayerMuChangeForTie(teams, teamRatings, result);
-        
+
         return result;
     }
 }

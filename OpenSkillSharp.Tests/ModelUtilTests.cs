@@ -1,3 +1,4 @@
+using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
 
@@ -8,8 +9,8 @@ public class ModelUtilTests
     [Fact]
     public void ModelValues_Defaults()
     {
-        var model = new PlackettLuce();
-        
+        PlackettLuce model = new();
+
         Assert.Equal(25D, model.Mu);
         Assert.Equal(25D / 3, model.Sigma);
         Assert.Equal(25D / 6, model.Beta);
@@ -22,90 +23,66 @@ public class ModelUtilTests
     [Fact]
     public void CalculateTeamSqrtSigma()
     {
-        var model = new PlackettLuce();
-        var teamRatings = model.CalculateTeamRatings(
+        PlackettLuce model = new();
+        List<ITeamRating> teamRatings = model.CalculateTeamRatings(
             [
-                new Team
-                {
-                    Players = [model.Rating()]
-                },
-                new Team
-                {
-                    Players = [model.Rating(), model.Rating()]
-                }
+                new Team { Players = [model.Rating()] },
+                new Team { Players = [model.Rating(), model.Rating()] }
             ]
         ).ToList();
-        
-        var teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
-        
+
+        double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
+
         Assert.Equal(15.590239, teamSqrtSigma, 0.000001);
     }
-    
+
     [Fact]
     public void CalculateTeamSqrtSigma_5v5()
     {
-        var model = new PlackettLuce();
-        var teamRatings = model.CalculateTeamRatings(
+        PlackettLuce model = new();
+        List<ITeamRating> teamRatings = model.CalculateTeamRatings(
             [
-                new Team
-                {
-                    Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                },
-                new Team
-                {
-                    Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                }
+                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] },
+                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] }
             ]
         ).ToList();
-        
-        var teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
-        
+
+        double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
+
         Assert.Equal(27.003, teamSqrtSigma, 0.001);
     }
 
     [Fact]
     public void CalculateSumQ()
     {
-        var model = new PlackettLuce();
-        var teamRatings = model.CalculateTeamRatings(
+        PlackettLuce model = new();
+        List<ITeamRating> teamRatings = model.CalculateTeamRatings(
             [
-                new Team
-                {
-                    Players = [model.Rating()]
-                },
-                new Team
-                {
-                    Players = [model.Rating(), model.Rating()]
-                }
+                new Team { Players = [model.Rating()] },
+                new Team { Players = [model.Rating(), model.Rating()] }
             ]
         ).ToList();
-        var teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
-        
-        var sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma);
-        
+        double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
+
+        IEnumerable<double> sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma);
+
         Assert.Equal([29.67892702634643, 24.70819334370875], sumQ);
     }
-    
+
     [Fact]
     public void CalculateSumQ_5v5()
     {
-        var model = new PlackettLuce();
-        var teamRatings = model.CalculateTeamRatings(
+        PlackettLuce model = new();
+        List<ITeamRating> teamRatings = model.CalculateTeamRatings(
             [
-                new Team
-                {
-                    Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                },
-                new Team
-                {
-                    Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                }
+                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] },
+                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] }
             ]
         ).ToList();
-        var teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
-        
-        var sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma).ToList();
-        
+        double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
+
+        List<double> sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma).ToList();
+
         Assert.Equal(204.8437881, sumQ[0], 0.0001);
         Assert.Equal(102.421894, sumQ[1], 0.0001);
     }
@@ -114,7 +91,7 @@ public class ModelUtilTests
     [InlineData(2, 2, 3, 4, 0, 1)]
     [InlineData(2, 2, 3, 16, 0, 2)]
     [InlineData(2, 2, 3, 64, 1, 4)]
-    public void CalculateGamma(   
+    public void CalculateGamma(
         double c,
         double k,
         double mu,
@@ -123,18 +100,18 @@ public class ModelUtilTests
         double expected
     )
     {
-        var model = new PlackettLuce();
-        
-        var gamma = model.Gamma(
-            c, 
-            k, 
-            mu, 
+        PlackettLuce model = new();
+
+        double gamma = model.Gamma(
+            c,
+            k,
+            mu,
             sigmaSq,
-            [model.Rating(), model.Rating(), model.Rating(), model.Rating(),model.Rating()],
+            [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()],
             qRank,
             null
         );
-        
+
         Assert.Equal(expected, gamma);
     }
 }

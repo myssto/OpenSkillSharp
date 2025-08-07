@@ -1,3 +1,4 @@
+using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Tests.Models.Data;
 using OpenSkillSharp.Tests.Util;
@@ -8,17 +9,17 @@ public class PlackettLuceTests
 {
     private readonly ModelTestData _testData = ModelTestData.FromJson("plackettluce");
     private PlackettLuce TestModel => new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma };
-    
+
     [Fact]
     public void Rate_Normal()
     {
         // Arrange
-        var expectedRatings = _testData.Normal;
-        var teams = TestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Normal;
+        IList<ITeam> teams = TestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = TestModel.Rate(teams);
-        
+        IEnumerable<ITeam> results = TestModel.Rate(teams);
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
@@ -27,137 +28,125 @@ public class PlackettLuceTests
     public void Rate_Ranks()
     {
         // Arrange
-        var expectedRatings = _testData.Ranks;
-        var teams = TestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Ranks;
+        IList<ITeam> teams = TestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = TestModel.Rate(
-            teams, 
-            ranks: [2, 1, 4, 3]
+        IEnumerable<ITeam> results = TestModel.Rate(
+            teams,
+            [2, 1, 4, 3]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
-    
+
     [Fact]
     public void Rate_Scores()
     {
         // Arrange
-        var expectedRatings = _testData.Scores;
-        var teams = TestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Scores;
+        IList<ITeam> teams = TestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = TestModel.Rate(
-            teams, 
+        IEnumerable<ITeam> results = TestModel.Rate(
+            teams,
             scores: [1, 2]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
-    
+
     [Fact]
     public void Rate_Margins()
     {
         // Arrange
-        var expectedRatings = _testData.Margins;
-        var marginTestModel = new PlackettLuce
-        {
-            Mu = _testData.Model.Mu,
-            Sigma = _testData.Model.Sigma,
-            Margin = 2D
-        };
-        var teams = marginTestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Margins;
+        PlackettLuce marginTestModel = new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Margin = 2D };
+        IList<ITeam> teams = marginTestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = marginTestModel.Rate(
+        IEnumerable<ITeam> results = marginTestModel.Rate(
             teams,
             scores: [10, 5, 5, 2, 1],
             weights: [[1, 2], [2, 1], [1, 2], [3, 1], [1, 2]]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
-    
+
     [Fact]
     public void Rate_LimitSigma()
     {
         // Arrange
-        var expectedRatings = _testData.LimitSigma;
-        var limitSigmaTestModel = new PlackettLuce
+        IList<ITeam> expectedRatings = _testData.LimitSigma;
+        PlackettLuce limitSigmaTestModel = new()
         {
-            Mu = _testData.Model.Mu,
-            Sigma = _testData.Model.Sigma,
-            LimitSigma = true
+            Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, LimitSigma = true
         };
-        var teams = limitSigmaTestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> teams = limitSigmaTestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = limitSigmaTestModel.Rate(
+        IEnumerable<ITeam> results = limitSigmaTestModel.Rate(
             teams,
-            ranks: [2, 1, 3]
+            [2, 1, 3]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
-    
+
     [Fact]
     public void Rate_Ties()
     {
         // Arrange
-        var expectedRatings = _testData.Ties;
-        var teams = TestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Ties;
+        IList<ITeam> teams = TestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = TestModel.Rate(
+        IEnumerable<ITeam> results = TestModel.Rate(
             teams,
-            ranks: [1, 2, 1]
+            [1, 2, 1]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
-    
+
     [Fact]
     public void Rate_Weights()
     {
         // Arrange
-        var expectedRatings = _testData.Weights;
-        var teams = TestModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Weights;
+        IList<ITeam> teams = TestModel.MockTeams(expectedRatings);
+
         // Act
-        var results = TestModel.Rate(
+        IEnumerable<ITeam> results = TestModel.Rate(
             teams,
-            ranks: [2, 1, 4, 3],
+            [2, 1, 4, 3],
             weights: [[2, 0, 0], [1, 2], [0, 0, 1], [0, 1]]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }
-    
+
     [Fact]
     public void Rate_Balance()
     {
         // Arrange
-        var expectedRatings = _testData.Balance;
-        var balanceModel = new PlackettLuce
-        {
-            Mu = _testData.Model.Mu,
-            Sigma = _testData.Model.Sigma,
-            Balance = true
-        };
-        var teams = balanceModel.MockTeams(expectedRatings);
-        
+        IList<ITeam> expectedRatings = _testData.Balance;
+        PlackettLuce balanceModel = new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Balance = true };
+        IList<ITeam> teams = balanceModel.MockTeams(expectedRatings);
+
         // Act
-        var results = balanceModel.Rate(
+        IEnumerable<ITeam> results = balanceModel.Rate(
             teams,
-            ranks: [1, 2]
+            [1, 2]
         );
-        
+
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
     }

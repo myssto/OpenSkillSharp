@@ -10,12 +10,12 @@ public interface IRating
     /// Known mostly as the mean of the Gaussian prior distribution.
     /// </summary>
     public double Mu { get; set; }
-    
+
     /// <summary>
     /// Standard deviation of the prior distribution of the player.
     /// </summary>
     public double Sigma { get; set; }
-    
+
     /// <summary>
     /// A single scalar value that represents the player's skill where their true skill is 99.7% likely to be higher.
     /// </summary>
@@ -39,7 +39,7 @@ public interface IRating
     /// </param>
     /// <returns>An ordinal value calculated for the player.</returns>
     public double GetOrdinal(double z = 3, double alpha = 1, double target = 0);
-    
+
     /// <summary>
     /// Creates a deep copy of the rating object.
     /// </summary>

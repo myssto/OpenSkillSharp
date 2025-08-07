@@ -2,8 +2,10 @@ namespace OpenSkillSharp.Util;
 
 public static class EnumerableExtensions
 {
-    public static bool IsEqualLengthTo<T, K>(this IEnumerable<T> source, IEnumerable<K> target) =>
-        source.Count() == target.Count();
+    public static bool IsEqualLengthTo<T, K>(this IEnumerable<T> source, IEnumerable<K> target)
+    {
+        return source.Count() == target.Count();
+    }
 
     public static IList<double> Normalize(this IList<double> source, double min, double max)
     {
@@ -11,16 +13,16 @@ public static class EnumerableExtensions
         {
             return new List<double> { max };
         }
-        
-        var srcMin = source.Min();
-        var srcRange = source.Max() - srcMin;
-        
+
+        double srcMin = source.Min();
+        double srcRange = source.Max() - srcMin;
+
         if (srcRange == 0)
         {
             srcRange = 0.0001;
         }
-        
-        return source.Select(v => (v - srcMin) / srcRange * (max - min) + min).ToList();
+
+        return source.Select(v => ((v - srcMin) / srcRange * (max - min)) + min).ToList();
     }
 
     /// <summary>
@@ -36,15 +38,15 @@ public static class EnumerableExtensions
         {
             return (new List<T>(), new List<double>());
         }
-        
-        var matrix = target
+
+        List<(double Tenet, int Index, T Object)> matrix = target
             .Select((t, i) => (Tenet: tenet[i], Index: i, Object: t))
             .OrderBy(x => x.Tenet)
             .ToList();
-        
-        var sortedTarget = matrix.Select(x => x.Object).ToList();
-        var sortedTenet = matrix.Select(x => (double)x.Index).ToList();
-        
+
+        List<T> sortedTarget = matrix.Select(x => x.Object).ToList();
+        List<double> sortedTenet = matrix.Select(x => (double)x.Index).ToList();
+
         return (sortedTarget, sortedTenet);
     }
 }

@@ -9,54 +9,54 @@ public interface IOpenSkillModel
     /// Known mostly as the mean of the Gaussian prior distribution.
     /// </summary>
     public double Mu { get; set; }
-    
+
     /// <summary>
     /// Standard deviation of the prior distribution of the player.
     /// </summary>
     public double Sigma { get; set; }
-    
+
     /// <summary>
     /// Hyperparameter that determines the level of uncertainty or variability present in the prior
     /// distribution of ratings.
     /// </summary>
     public double Beta { get; set; }
-    
+
     /// <summary>
     /// The value of <see cref="Beta"/> squared.
     /// </summary>
     public double BetaSq { get; }
-    
+
     /// <summary>
     /// Arbitrary, small, positive, real number that is used to prevent the variance of the posterior distribution
     /// from becoming too small or negative. It can also be thought of as a regularization parameter.
     /// </summary>
     public double Kappa { get; set; }
-    
+
     /// <summary>
     /// Function used as the formula to calculate gamma.
     /// </summary>
     public GammaFactory Gamma { get; set; }
-    
+
     /// <summary>
     /// Additive dynamics parameter that prevents sigma from getting too small to increase rating change volatility.
     /// </summary>
     public double Tau { get; set; }
-    
+
     /// <summary>
     /// The margin of victory needed for a win to be considered impressive.
     /// </summary>
     public double Margin { get; set; }
-    
+
     /// <summary>
     /// Determines whether to restrict the value of sigma from increasing.
     /// </summary>
     public bool LimitSigma { get; set; }
-    
+
     /// <summary>
     /// Determines whether to emphasize rating outliers.
     /// </summary>
     public bool Balance { get; set; }
-    
+
     /// <summary>
     /// Creates a new rating object with the configured defaults for this model. The given parameters can
     /// override the defaults for this model, but it is not recommended unless you know what you are doing.
@@ -70,7 +70,7 @@ public interface IOpenSkillModel
     /// </param>
     /// <returns>A new rating object.</returns>
     public IRating Rating(double? mu = null, double? sigma = null);
-    
+
     /// <summary>
     /// Calculate the new ratings based on the given teams and parameters.
     /// </summary>
@@ -105,7 +105,7 @@ public interface IOpenSkillModel
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A list of numbers representing the odds of each team winning.</returns>
     public IEnumerable<double> PredictWin(IList<ITeam> teams);
-    
+
     /// <summary>
     /// Predict how likely a match of teams of one or more players will conclude in a draw.
     /// </summary>

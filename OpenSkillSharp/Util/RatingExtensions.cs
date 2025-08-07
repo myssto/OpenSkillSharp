@@ -13,12 +13,12 @@ public static class RatingExtensions
         {
             return new List<double>();
         }
-        
-        var teamScores = ranks is not null
+
+        List<double> teamScores = ranks is not null
             ? ranks.Take(game.Count).ToList()
             : Enumerable.Range(0, game.Count).Select(i => (double)i).ToList();
 
-        var rankMap = teamScores
+        Dictionary<double, double> rankMap = teamScores
             .OrderBy(s => s)
             .Select((score, idx) => (score, idx))
             .GroupBy(t => t.score)
@@ -29,10 +29,10 @@ public static class RatingExtensions
 
     public static IEnumerable<int> CountRankOccurrences(this IList<ITeamRating> teamRatings)
     {
-        var rankCounts = teamRatings
+        Dictionary<int, int> rankCounts = teamRatings
             .GroupBy(tr => tr.Rank)
             .ToDictionary(g => g.Key, g => g.Count());
-        
+
         return teamRatings.Select(team => rankCounts[team.Rank]);
     }
 }
