@@ -1,5 +1,6 @@
 using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Rating;
+using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp.Models;
 
@@ -24,112 +25,75 @@ public class BradleyTerryPart : OpenSkillModelBase
     )
     {
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams, ranks).ToList();
-        int nTeams = teamRatings.Count;
 
-        List<ITeam> result = new();
-        foreach ((int teamIdi, ITeamRating teamI) in teamRatings.Index())
-        {
-            double omegaSum = 0D;
-            double deltaSum = 0D;
-            int comparisonCount = 0;
-
-            int start = Math.Max(0, teamIdi - WindowSize);
-            int end = Math.Min(nTeams, teamIdi + WindowSize + 1);
-
-            for (int teamIdq = start; teamIdq < end; teamIdq++)
+        return teamRatings
+            .Select((iTeam, iTeamIndex) =>
             {
-                if (teamIdq == teamIdi)
-                {
-                    continue;
-                }
-
-                ITeamRating teamQ = teamRatings.ElementAt(teamIdq);
-                double? teamQScore = scores?.ElementAtOrDefault(teamIdq);
-                double? teamIScore = scores?.ElementAtOrDefault(teamIdi);
-                double marginFactor = 1D;
-
-                if (teamQScore.HasValue && teamIScore.HasValue)
-                {
-                    double scoreDiff = Math.Abs(teamQScore.Value - teamIScore.Value);
-                    if (scoreDiff > 0 && teamQ.Rank < teamI.Rank && Margin > 0 && scoreDiff > Margin)
+                // Calculate omega and delta
+                int comparisonCount = 0;
+                (double omega, double delta) = teamRatings
+                    .Index()
+                    .Skip(Math.Max(0, iTeamIndex - WindowSize))
+                    .Take(Math.Min(teamRatings.Count, iTeamIndex + WindowSize + 1))
+                    .Where(q => q.Index != iTeamIndex)
+                    .Aggregate((sumOmega: 0D, sumDelta: 0D), (acc, q) =>
                     {
-                        marginFactor = Math.Log(1 + (scoreDiff / Margin));
-                    }
-                }
+                        (int qTeamIndex, ITeamRating qTeam) = q;
 
-                double cIq = Math.Sqrt(teamI.SigmaSq + teamQ.SigmaSq + (2 * BetaSq));
-                double pIq = 1 / (1 + Math.Exp((teamQ.Mu - teamI.Mu) * marginFactor / cIq));
-                double sigmaToCIq = teamI.SigmaSq / cIq;
+                        // Margin factor adjustment
+                        double marginFactor = 1;
+                        if (scores is not null)
+                        {
+                            double scoreDiff = Math.Abs(scores[qTeamIndex] - scores[iTeamIndex]);
+                            if (scoreDiff > 0 && Margin > 0 && scoreDiff > Margin && qTeam.Rank < iTeam.Rank)
+                            {
+                                marginFactor = Math.Log(1 + (scoreDiff / Margin));
+                            }
+                        }
 
-                double s = 0D;
-                if (teamQ.Rank > teamI.Rank)
+                        double ciq = Math.Sqrt(iTeam.SigmaSq + qTeam.SigmaSq + (2 * BetaSq));
+                        double piq = 1 / (1 + Math.Exp((qTeam.Mu - iTeam.Mu) * marginFactor / ciq));
+                        double sigmaToCiq = iTeam.SigmaSq / ciq;
+                        double s = Common.Score(qTeam.Rank, iTeam.Rank);
+                        double gamma = Gamma(
+                            ciq,
+                            teamRatings.Count,
+                            iTeam.Mu,
+                            iTeam.SigmaSq,
+                            iTeam.Players,
+                            iTeam.Rank,
+                            weights?.ElementAt(iTeamIndex)
+                        );
+
+                        comparisonCount++;
+                        return (
+                            sumOmega: acc.sumOmega + (sigmaToCiq * (s - piq)),
+                            sumDelta: acc.sumDelta + (gamma * sigmaToCiq / ciq * piq * (1 - piq))
+                        );
+                    });
+
+                omega = comparisonCount > 0 ? omega / comparisonCount : omega;
+                delta = comparisonCount > 0 ? delta / comparisonCount : delta;
+
+                // Adjust player ratings
+                List<IRating> modifiedTeam = iTeam.Players.Select((_, jPlayerIndex) =>
                 {
-                    s = 1D;
-                }
-                else if (teamQ.Rank == teamI.Rank)
-                {
-                    s = 0.5;
-                }
+                    IRating modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
+                    double weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
+                    double scalar = omega >= 0
+                        ? weight
+                        : 1 / weight;
 
-                omegaSum += sigmaToCIq * (s - pIq);
-                double gamma = Gamma(
-                    cIq,
-                    nTeams,
-                    teamI.Mu,
-                    teamI.SigmaSq,
-                    teamI.Players,
-                    teamI.Rank,
-                    weights?.ElementAt(teamIdi)
-                );
-                deltaSum += gamma * sigmaToCIq / cIq * pIq * (1 - pIq);
-                comparisonCount++;
-            }
+                    modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega * scalar;
+                    modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
+                        1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * scalar),
+                        Kappa
+                    ));
 
-            double omega = comparisonCount > 0
-                ? omegaSum / comparisonCount
-                : 0D;
-            double delta = comparisonCount > 0
-                ? deltaSum / comparisonCount
-                : 0D;
+                    return modifiedPlayer;
+                }).ToList();
 
-            List<IRating> modifiedTeam = new();
-            foreach ((int playerIdj, IRating playerJ) in teamI.Players.Index())
-            {
-                double weight = weights?.ElementAtOrDefault(teamIdi)?.ElementAtOrDefault(playerIdj) ?? 1D;
-                double mu = playerJ.Mu;
-                double sigma = playerJ.Sigma;
-
-                if (omega >= 0)
-                {
-                    mu += sigma * sigma / teamI.SigmaSq * omega * weight;
-                    sigma *= Math.Sqrt(
-                        Math.Max(
-                            1 - (sigma * sigma / teamI.SigmaSq * delta * weight),
-                            Kappa
-                        )
-                    );
-                }
-                else
-                {
-                    mu += sigma * sigma / teamI.SigmaSq * omega / weight;
-                    sigma *= Math.Sqrt(
-                        Math.Max(
-                            1 - (sigma * sigma / teamI.SigmaSq * delta / weight),
-                            Kappa
-                        )
-                    );
-                }
-
-                IRating modifiedPlayer = teams.ElementAt(teamIdi).Players.ElementAt(playerIdj);
-                modifiedPlayer.Mu = mu;
-                modifiedPlayer.Sigma = sigma;
-
-                modifiedTeam.Add(modifiedPlayer);
-            }
-
-            result.Add(new Team { Players = modifiedTeam });
-        }
-
-        return result;
+                return new Team { Players = modifiedTeam };
+            }).ToList();
     }
 }
