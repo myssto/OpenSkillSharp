@@ -5,6 +5,9 @@ using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp;
 
+/// <summary>
+/// Base class for all OpenSkill model implementations.
+/// </summary>
 public abstract class OpenSkillModelBase : IOpenSkillModel
 {
     public double Mu { get; set; } = 25D;
@@ -215,6 +218,11 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         });
     }
     
+    /// <summary>
+    /// Calculate the square root of the collective team sigma.
+    /// </summary>
+    /// <param name="teamRatings">A list of team ratings in a game.</param>
+    /// <returns>A number representing the square root of the collective team sigma.</returns>
     public double CalculateTeamSqrtSigma(IList<ITeamRating> teamRatings) =>
         Math.Sqrt(teamRatings.Select(t => t.SigmaSq + BetaSq).Sum());
     
@@ -235,46 +243,77 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     )
     {
         // Calculate margin adjustment for team mu values if ranks are provided
-        var adjustedMus = scores?.Count == teamRatings.Count
-            ? teamRatings
-                .Select((qTeam, qTeamIndex) =>
-                {
-                    var qTeamScore = scores[qTeamIndex];
-                    var muAdjustment = teamRatings
-                        .Where((_, iTeamIndex) =>
-                            qTeamIndex != iTeamIndex
-                            && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
-                        )
-                        .Select((iTeam, iTeamIndex) =>
-                        {
-                            var iTeamScore = scores[iTeamIndex];
-                            var direction = qTeamScore > iTeamScore ? 1D : -1D;
-                            var scoreDiff = Math.Abs(qTeamScore - iTeamScore);
-                            var marginFactor = scoreDiff > Margin && Margin > 0
-                                ? Math.Log(1 + scoreDiff / Margin)
-                                : 1D;
-
-                            return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * direction;
-                        })
-                        .Average();
-                
-                    return (qTeamIndex, qTeam.Mu + muAdjustment);
-                })
-                .ToDictionary()
-            : new Dictionary<int, double>();
+        var adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
 
         return teamRatings.Select(qTeam => teamRatings
             .Select((iTeam, iTeamIndex) => (iTeam, iTeamIndex))
             .Where(x => x.iTeam.Rank >= qTeam.Rank)
-            .Select(x =>
-            {
-                var iTeamMu = adjustedMus.TryGetValue(x.iTeamIndex, out var iTeamAdjustedMu)
-                    ? iTeamAdjustedMu
-                    : x.iTeam.Mu;
-            
-                return Math.Exp(iTeamMu / c);
-            }).Sum()
+            .Select(x => Math.Exp(adjustedMus[x.iTeamIndex] / c)).Sum()
         );
+    }
+
+    public IEnumerable<double> CalculateMarginAdjustedMu(
+        IList<ITeamRating> teamRatings,
+        IList<double>? scores = null
+    )
+    {
+        if (scores?.Count != teamRatings.Count)
+        {
+            return teamRatings.Select(t => t.Mu);
+        }
+
+        return teamRatings
+            .Select((qTeam, qTeamIndex) =>
+            {
+                var qTeamScore = scores[qTeamIndex];
+                var muAdjustment = teamRatings
+                    .Where((_, iTeamIndex) =>
+                        qTeamIndex != iTeamIndex
+                        && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
+                    )
+                    .Select((iTeam, iTeamIndex) =>
+                    {
+                        var iTeamScore = scores[iTeamIndex];
+                        var direction = qTeamScore > iTeamScore ? 1D : -1D;
+                        var scoreDiff = Math.Abs(qTeamScore - iTeamScore);
+                        var marginFactor = scoreDiff > Margin && Margin > 0
+                            ? Math.Log(1 + scoreDiff / Margin)
+                            : 1D;
+
+                        return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * direction;
+                    })
+                    .Average();
+
+                return qTeam.Mu + muAdjustment;
+            });
+    }
+
+    public static void AdjustPlayerMuChangeForTie(
+        IList<ITeam> originalTeams,
+        IList<ITeamRating> teamRatings,
+        IEnumerable<ITeam> processedTeams
+    )
+    {
+        var processedTeamsList = processedTeams.ToList();
+        var rankGroups = teamRatings
+            .Select((tr, i) => new { tr.Rank, Index = i })
+            .GroupBy(x => x.Rank)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Index).ToList());
+        
+        foreach (var teamIndices in rankGroups.Values.Where(g => g.Count > 1))
+        {
+            var avgMuChange = teamIndices.Average(i => 
+                processedTeamsList[i].Players.First().Mu - originalTeams[i].Players.First().Mu
+            );
+    
+            foreach (var teamIndex in teamIndices)
+            {
+                foreach (var (playerIndex, player) in processedTeamsList[teamIndex].Players.Index())
+                {
+                    player.Mu = originalTeams[teamIndex].Players.ElementAt(playerIndex).Mu + avgMuChange;
+                }
+            }
+        }
     }
     
     protected static double DefaultGamma(
@@ -287,6 +326,14 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         IEnumerable<double>? weights
     ) => Math.Sqrt(sigmaSq) / c;
 
+    /// <summary>
+    /// Computes the updated ratings for a list of teams in a game.
+    /// </summary>
+    /// <param name="teams">A list of teams.</param>
+    /// <param name="ranks">An optional list representing rank positions for each team.</param>
+    /// <param name="scores">An optional list representing scores achieved by each team.</param>
+    /// <param name="weights">An optional matrix of weights applied during the computation.</param>
+    /// <returns>A list of teams with updated ratings.</returns>
     protected abstract IEnumerable<ITeam> Compute(
         IList<ITeam> teams,
         IList<double>? ranks = null,

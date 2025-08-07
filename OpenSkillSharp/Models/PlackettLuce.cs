@@ -24,143 +24,63 @@ public class PlackettLuce : OpenSkillModelBase
         var c = CalculateTeamSqrtSigma(teamRatings);
         var sumQ = CalculateSumQ(teamRatings, c, ranks).ToList();
         var rankOccurrences = teamRatings.CountRankOccurrences().ToList();
-        
-        var rankGroups = teamRatings
-            .Select((tr, i) => new { tr.Rank, Index = i })
-            .GroupBy(x => x.Rank)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.Index).ToList());
-        
-        var result = new List<ITeam>();
-        foreach (var (teamIdi, teamI) in teamRatings.Index())
+        var adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
+    
+        var result = teamRatings.Select((iTeam, iTeamIndex) =>
         {
-            var omega = 0D;
-            var delta = 0D;
-
-            // Adjust Mu with margin if scores are present
-            var adjustedMuI = teamI.Mu;
-            var scoreI = scores?.ElementAtOrDefault(teamIdi);
-            if (scoreI.HasValue)
-            {
-                var marginAdjustment = 0D;
-                var comparisonCount = 0;
-
-                foreach (var (teamIdj, teamJ) in teamRatings.Index())
+            // Calculate omega and delta
+            var iMuOverC = Math.Exp(adjustedMus[iTeamIndex] / c);
+            var (omega, delta) = teamRatings
+                .Select((qTeam, qTeamIndex) => (qTeam, qTeamIndex))
+                .Where(x => x.qTeam.Rank <= iTeam.Rank)
+                .Aggregate((sumOmega: 0D, sumDelta: 0D), (acc, x) =>
                 {
-                    var scoreJ = scores?.ElementAtOrDefault(teamIdj);
-                    if (teamIdi == teamIdj || !scoreJ.HasValue)
-                    {
-                        continue;
-                    }
-                    
-                    var scoreDiff = Math.Abs(scoreI.Value - scoreJ.Value);
-                    if (scoreDiff <= 0)
-                    {
-                        continue;
-                    }
-
-                    var marginFactor = scoreDiff > Margin && Margin > 0
-                        ? Math.Log(1 + scoreDiff / Margin)
-                        : 1D;
-                    
-                    var skillDiff = teamI.Mu - teamJ.Mu;
-                    var direction = scoreI.Value > scoreJ.Value ? 1D : -1D;
-
-                    marginAdjustment += skillDiff * (marginFactor - 1) * direction;
-                    comparisonCount++;
-                }
-                
-                adjustedMuI += comparisonCount > 0 ? marginAdjustment / comparisonCount : 0;
-            }
-
-            var iMuOverC = Math.Exp(adjustedMuI / c);
-            
-            // Calculate Omega and Delta
-            foreach (var (teamIdq, teamQ) in teamRatings.Index())
-            {
-                var iMuOverCeOverSumQ = iMuOverC / sumQ[teamIdq];
-
-                if (teamQ.Rank > teamI.Rank)
-                {
-                    continue;
-                }
-                
-                delta += iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[teamIdq];
-                if (teamQ.Rank == teamI.Rank)
-                {
-                    omega += (1 - iMuOverCeOverSumQ) / rankOccurrences[teamIdq];
-                }
-                else
-                {
-                    omega -= iMuOverCeOverSumQ / rankOccurrences[teamIdq];
-                }
-            }
-
-            omega *= teamI.SigmaSq / c;
-            delta *= teamI.SigmaSq / Math.Pow(c, 2);
+                    var iMuOverCeOverSumQ = iMuOverC / sumQ[x.qTeamIndex];
+    
+                    return (
+                        sumOmega: acc.sumOmega + (
+                            iTeamIndex == x.qTeamIndex 
+                                ? 1 - iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex]
+                                : -1 * iMuOverCeOverSumQ / rankOccurrences[x.qTeamIndex]
+                        ),
+                        sumDelta: acc.sumDelta + iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[x.qTeamIndex]
+                    );
+                });
+    
+            omega *= iTeam.SigmaSq / c;
+            delta *= iTeam.SigmaSq / Math.Pow(c, 2);
             delta *= Gamma(
                 c, 
                 teamRatings.Count, 
-                teamI.Mu, 
-                teamI.SigmaSq, 
-                teamI.Players,
-                teamI.Rank, 
-                weights?.ElementAtOrDefault(teamIdi)
+                iTeam.Mu, 
+                iTeam.SigmaSq, 
+                iTeam.Players,
+                iTeam.Rank, 
+                weights?.ElementAtOrDefault(iTeamIndex)
             );
-
-            // Update player ratings
-            var modifiedTeam = new List<IRating>();
-            foreach (var (playerIdj, playerJ) in teamI.Players.Index())
+    
+            // Adjust player ratings
+            var modifiedTeam = iTeam.Players.Select((_, jPlayerIndex) =>
             {
-                var weight = weights?.ElementAtOrDefault(teamIdi)?.ElementAtOrDefault(playerIdj) ?? 1D;
-                var mu = playerJ.Mu;
-                var sigma = playerJ.Sigma;
-
-                if (omega >= 0)
-                {
-                    mu += (sigma * sigma / teamI.SigmaSq) * omega * weight;
-                    sigma *= Math.Sqrt(
-                        Math.Max(
-                            1 - (sigma * sigma / teamI.SigmaSq) * delta * weight,
-                            Kappa
-                        )
-                    );
-                }
-                else
-                {
-                    mu += (sigma * sigma / teamI.SigmaSq) * omega / weight;
-                    sigma *= Math.Sqrt(
-                        Math.Max(
-                            1 - (sigma * sigma / teamI.SigmaSq) * delta / weight,
-                            Kappa
-                        )
-                    );
-                }
-
-                var modifiedPlayer = teams.ElementAt(teamIdi).Players.ElementAt(playerIdj);
-                modifiedPlayer.Mu = mu;
-                modifiedPlayer.Sigma = sigma;
+                var modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
+                var weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
+                var scalar = omega >= 0 
+                    ? weight 
+                    : 1 / weight;
                 
-                modifiedTeam.Add(modifiedPlayer);
-            }
+                modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega * scalar;
+                modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
+                    1 - modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * scalar,
+                    Kappa
+                ));
+                
+                return modifiedPlayer;
+            }).ToList();
             
-            result.Add(new Team { Players = modifiedTeam });
-        }
-
-        // Average mu changes for teams that tied
-        foreach (var teamIndices in rankGroups.Values.Where(g => g.Count > 1))
-        {
-            var avgMuChange = teamIndices.Average(i => 
-                result.ElementAt(i).Players.First().Mu - teams.ElementAt(i).Players.First().Mu
-            );
-
-            foreach (var teamIndex in teamIndices)
-            {
-                foreach (var (playerIndex, player) in result.ElementAt(teamIndex).Players.Index())
-                {
-                    player.Mu = teams.ElementAt(teamIndex).Players.ElementAt(playerIndex).Mu + avgMuChange;
-                }
-            }
-        }
+            return new Team { Players = modifiedTeam };
+        }).ToList();
+        
+        AdjustPlayerMuChangeForTie(teams, teamRatings, result);
         
         return result;
     }
