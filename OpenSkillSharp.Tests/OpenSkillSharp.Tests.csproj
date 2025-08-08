@@ -34,6 +34,9 @@
         <None Update="Models\Data\bradleyterryfull.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="Models\Data\thurstonemostellerfull.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Rating;
 
-namespace OpenSkillSharp.Tests.Models.Data;
+namespace OpenSkillSharp.Tests.Util;
 
 public class ModelTestData
 {

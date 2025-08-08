@@ -1,14 +1,13 @@
 using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Models;
-using OpenSkillSharp.Rating;
 using OpenSkillSharp.Tests.Util;
 
 namespace OpenSkillSharp.Tests.Models;
 
-public class BradleyTerryPartTests
+public class ThurstoneMostellerFullTests
 {
-    private readonly ModelTestData _testData = ModelTestData.FromJson("bradleyterrypart");
-    private BradleyTerryPart TestModel => new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma };
+    private readonly ModelTestData _testData = ModelTestData.FromJson("thurstonemostellerfull");
+    private ThurstoneMostellerFull TestModel => new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma };
 
     [Fact]
     public void Rate_Normal()
@@ -63,10 +62,8 @@ public class BradleyTerryPartTests
     {
         // Arrange
         IList<ITeam> expectedRatings = _testData.Margins;
-        BradleyTerryPart marginTestModel = new()
-        {
-            Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Margin = 2D
-        };
+        ThurstoneMostellerFull marginTestModel =
+            new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Margin = 2D };
         IList<ITeam> teams = marginTestModel.MockTeams(expectedRatings);
 
         // Act
@@ -85,7 +82,7 @@ public class BradleyTerryPartTests
     {
         // Arrange
         IList<ITeam> expectedRatings = _testData.LimitSigma;
-        BradleyTerryPart limitSigmaTestModel = new()
+        ThurstoneMostellerFull limitSigmaTestModel = new()
         {
             Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, LimitSigma = true
         };
@@ -141,10 +138,8 @@ public class BradleyTerryPartTests
     {
         // Arrange
         IList<ITeam> expectedRatings = _testData.Balance;
-        BradleyTerryPart balanceModel = new()
-        {
-            Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Balance = true
-        };
+        ThurstoneMostellerFull balanceModel =
+            new() { Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Balance = true };
         IList<ITeam> teams = balanceModel.MockTeams(expectedRatings);
 
         // Act
@@ -155,29 +150,5 @@ public class BradleyTerryPartTests
 
         // Assert
         Assertions.RatingResultsEqual(expectedRatings, results);
-    }
-
-    [Fact]
-    public void Rate_WindowSize0_Tau0()
-    {
-        // Arrange
-        BradleyTerryPart windowTauModel = new()
-        {
-            Mu = _testData.Model.Mu, Sigma = _testData.Model.Sigma, Tau = 0, WindowSize = 0
-        };
-        IRating playerA = windowTauModel.Rating();
-        IRating playerB = windowTauModel.Rating();
-
-        // Act
-        List<ITeam> results = windowTauModel.Rate(
-            [
-                new Team { Players = [playerA] },
-                new Team { Players = [playerB] }
-            ]
-        ).ToList();
-
-        // Assert
-        Assertions.RatingsEqual(playerA, results.ElementAt(0).Players.ElementAt(0));
-        Assertions.RatingsEqual(playerB, results.ElementAt(1).Players.ElementAt(0));
     }
 }
