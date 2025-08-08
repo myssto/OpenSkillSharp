@@ -70,12 +70,12 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                     $"Arguments '{nameof(weights)}' and '{nameof(teams)}' must be of equal length.");
             }
 
-            for (int i = 0; i < weights.Count; i++)
+            foreach ((int index, IList<double> weight) in weights.Index())
             {
-                if (!weights[i].IsEqualLengthTo(teams[i].Players))
+                if (!weight.IsEqualLengthTo(teams[index].Players))
                 {
                     throw new ArgumentException(
-                        $"Size of team weights at index {i} does not match the size of the team.");
+                        $"Size of team weights at index {index} does not match the size of the team.");
                 }
             }
         }

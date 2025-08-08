@@ -1,6 +1,6 @@
 using OpenSkillSharp.Rating;
 
-namespace OpenSkillSharp;
+namespace OpenSkillSharp.Util;
 
 /// <summary>
 /// Represents a function to calculate a gamma value.
