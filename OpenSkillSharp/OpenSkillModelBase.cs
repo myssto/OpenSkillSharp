@@ -236,7 +236,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     /// An optional list of numbers representing a score for each team of <paramref name="teamRatings"/> used
     /// in margin factor calculation.
     /// </param>
-    /// <returns>A list of numbers representing the SumQ for each team</returns>
+    /// <returns>A list of numbers representing the SumQ for each team.</returns>
     public IEnumerable<double> CalculateSumQ(
         IList<ITeamRating> teamRatings,
         double c,
@@ -253,7 +253,16 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         );
     }
 
-    public IEnumerable<double> CalculateMarginAdjustedMu(
+    /// <summary>
+    /// Calculate mu with margin adjustment for teams.
+    /// </summary>
+    /// <param name="teamRatings">A list of team ratings in a game.</param>
+    /// <param name="scores">
+    /// An optional list of numbers representing a score for each team of <paramref name="teamRatings"/> used
+    /// in margin factor calculation.
+    /// </param>
+    /// <returns>A list of numbers representing the updated mu for each team.</returns>
+    protected IEnumerable<double> CalculateMarginAdjustedMu(
         IList<ITeamRating> teamRatings,
         IList<double>? scores = null
     )
@@ -263,33 +272,75 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             return teamRatings.Select(t => t.Mu);
         }
 
-        return teamRatings
-            .Select((qTeam, qTeamIndex) =>
-            {
-                double qTeamScore = scores[qTeamIndex];
-                double muAdjustment = teamRatings
-                    .Where((_, iTeamIndex) =>
-                        qTeamIndex != iTeamIndex
-                        && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
-                    )
-                    .Select((iTeam, iTeamIndex) =>
-                    {
-                        double iTeamScore = scores[iTeamIndex];
-                        double direction = qTeamScore > iTeamScore ? 1D : -1D;
-                        double scoreDiff = Math.Abs(qTeamScore - iTeamScore);
-                        double marginFactor = scoreDiff > Margin && Margin > 0
-                            ? Math.Log(1 + (scoreDiff / Margin))
-                            : 1D;
+        return teamRatings.Select((qTeam, qTeamIndex) =>
+        {
+            double qTeamScore = scores[qTeamIndex];
+            double muAdjustment = teamRatings
+                .Where((_, iTeamIndex) =>
+                    qTeamIndex != iTeamIndex
+                    && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
+                )
+                .Select((iTeam, iTeamIndex) =>
+                {
+                    double iTeamScore = scores[iTeamIndex];
+                    double scoreDiff = Math.Abs(qTeamScore - iTeamScore);
+                    double marginFactor = scoreDiff > Margin && Margin > 0
+                        ? Math.Log(1 + (scoreDiff / Margin))
+                        : 1D;
 
-                        return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * direction;
-                    })
-                    .Average();
+                    double sign = qTeamScore > iTeamScore ? 1D : -1D;
+                    return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * sign;
+                })
+                .Average();
 
-                return qTeam.Mu + muAdjustment;
-            });
+            return qTeam.Mu + muAdjustment;
+        });
     }
 
-    public static void AdjustPlayerMuChangeForTie(
+    /// <summary>
+    /// Update player ratings in a game based on the calculated omega and delta.
+    /// </summary>
+    /// <param name="originalTeam">Original team.</param>
+    /// <param name="team">Team rating.</param>
+    /// <param name="omega">Omega.</param>
+    /// <param name="delta">Delta.</param>
+    /// <param name="weights">
+    /// An optional list of numbers where each number represents the contribution of each player to the team's performance.
+    /// </param>
+    /// <returns>A list of updated rating objects.</returns>
+    protected List<IRating> UpdatePlayerRatings(
+        ITeam originalTeam,
+        ITeamRating team,
+        double omega,
+        double delta,
+        IEnumerable<double>? weights
+    )
+    {
+        return team.Players.Select((_, jPlayerIndex) =>
+        {
+            IRating modifiedPlayer = originalTeam.Players.ElementAt(jPlayerIndex);
+            double weight = weights?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
+            double weightScalar = omega >= 0
+                ? weight
+                : 1 / weight;
+
+            modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / team.SigmaSq * omega * weightScalar;
+            modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
+                1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / team.SigmaSq * delta * weightScalar),
+                Kappa
+            ));
+
+            return modifiedPlayer;
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Adjust player mu changes individually for teams in which a tie occurred.
+    /// </summary>
+    /// <param name="originalTeams">A list of teams in a game.</param>
+    /// <param name="teamRatings">A list of team ratings in a game.</param>
+    /// <param name="processedTeams">A list of teams in a game with updated ratings.</param>
+    protected static void AdjustPlayerMuChangeForTie(
         IList<ITeam> originalTeams,
         IList<ITeamRating> teamRatings,
         IEnumerable<ITeam> processedTeams
@@ -317,6 +368,9 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         }
     }
 
+    /// <summary>
+    /// The default gamma calculation for all models.
+    /// </summary>
     protected static double DefaultGamma(
         double c,
         double k,
@@ -331,12 +385,12 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     }
 
     /// <summary>
-    /// Computes the updated ratings for a list of teams in a game.
+    /// Compute the updated ratings for a list of teams in a game.
     /// </summary>
     /// <param name="teams">A list of teams.</param>
     /// <param name="ranks">An optional list representing rank positions for each team.</param>
     /// <param name="scores">An optional list representing scores achieved by each team.</param>
-    /// <param name="weights">An optional matrix of weights applied during the computation.</param>
+    /// <param name="weights">An optional matrix of player weights applied during the computation.</param>
     /// <returns>A list of teams with updated ratings.</returns>
     protected abstract IEnumerable<ITeam> Compute(
         IList<ITeam> teams,

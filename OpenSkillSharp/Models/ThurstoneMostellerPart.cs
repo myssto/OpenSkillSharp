@@ -98,26 +98,16 @@ public class ThurstoneMostellerPart : OpenSkillModelBase
                 delta = delta / nComparisons;
             }
 
-            // Adjust player ratings
-            List<IRating> modifiedTeam = iTeam.Players.Select((_, jPlayerIndex) =>
+            return new Team
             {
-                IRating modifiedPlayer = teams[iTeamIndex].Players.ElementAt(jPlayerIndex);
-                double weight = weights?.ElementAtOrDefault(iTeamIndex)?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
-                double weightScalar = omega >= 0
-                    ? weight
-                    : 1 / weight;
-
-                modifiedPlayer.Mu += modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * omega *
-                                     weightScalar;
-                modifiedPlayer.Sigma *= Math.Sqrt(Math.Max(
-                    1 - (modifiedPlayer.Sigma * modifiedPlayer.Sigma / iTeam.SigmaSq * delta * weightScalar),
-                    Kappa
-                ));
-
-                return modifiedPlayer;
-            }).ToList();
-
-            return new Team { Players = modifiedTeam };
+                Players = UpdatePlayerRatings(
+                    teams[iTeamIndex],
+                    iTeam,
+                    omega,
+                    delta,
+                    weights?.ElementAtOrDefault(iTeamIndex)
+                )
+            };
         }).ToList();
     }
 }
