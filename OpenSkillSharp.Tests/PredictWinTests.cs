@@ -1,5 +1,3 @@
-using OpenSkillSharp.Domain.Model;
-using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
 

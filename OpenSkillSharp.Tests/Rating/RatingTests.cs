@@ -1,5 +1,5 @@
-using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Models;
+using OpenSkillSharp.Rating;
 using OpenSkillSharp.Tests.Util;
 
 namespace OpenSkillSharp.Tests.Rating;

@@ -8,7 +8,8 @@
         <Authors>myssto</Authors>
         <Description>A faster, open-license alternative to Microsoft TrueSkill </Description>
         <PackageProjectUrl>https://github.com/myssto/OpenSkillSharp</PackageProjectUrl>
-        <PackageLicenseUrl></PackageLicenseUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/myssto/OpenSkillSharp.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>ranking, rating, elo, trueskill, openskill, bayesian</PackageTags>
@@ -16,11 +17,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\OpenSkillSharp.Domain\OpenSkillSharp.Domain.csproj"/>
+        <None Include="..\LICENSE" Pack="true" PackagePath=""/>
+        <None Include="..\README.md" Pack="true" PackagePath=""/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta2"/>
+        <PackageReference Include="MathNet.Numerics" Version="5.0.0"/>
     </ItemGroup>
 
 </Project>

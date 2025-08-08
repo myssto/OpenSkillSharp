@@ -1,4 +1,4 @@
-namespace OpenSkillSharp.Domain.Rating;
+namespace OpenSkillSharp.Rating;
 
 /// <summary>
 /// Interfaces an object representing a team of player ratings.

@@ -1,5 +1,3 @@
-using OpenSkillSharp.Domain.Rating;
-
 namespace OpenSkillSharp.Rating;
 
 public class Rating : IRating

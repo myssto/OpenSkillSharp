@@ -1,4 +1,4 @@
-using OpenSkillSharp.Domain.Rating;
+using OpenSkillSharp.Rating;
 
 namespace OpenSkillSharp.Tests.Util;
 

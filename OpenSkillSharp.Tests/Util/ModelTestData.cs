@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using OpenSkillSharp.Domain.Rating;
 using OpenSkillSharp.Rating;
 
 namespace OpenSkillSharp.Tests.Util;
