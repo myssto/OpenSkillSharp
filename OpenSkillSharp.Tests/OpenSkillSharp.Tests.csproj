@@ -37,6 +37,9 @@
         <None Update="Models\Data\thurstonemostellerfull.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="Models\Data\thurstonemostellerpart.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

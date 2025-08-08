@@ -5,17 +5,23 @@ using OpenSkillSharp.Util;
 namespace OpenSkillSharp.Models;
 
 /// <summary>
-/// The Bradley-Terry Part model maintains the single scalar value representation of player performance,
-/// enables rating updates based on match outcomes, and utilizes a logistic regression approach for rating
-/// estimation. By allowing for partial pairing situations, this model caters to scenarios where not all
-/// players face each other directly and still provides accurate rating estimates.
+/// The Thurstone-Mosteller with Partial Pairing model extends the full pairing model to handle scenarios where not
+/// all players compete against each other. It retains the assumptions of the full pairing model - utilizing a single
+/// scalar value to represent player performance, enabling rating updates through match outcomes, and employing
+/// maximum likelihood estimation for rating estimation. This model relaxes the requirement for complete pairing and
+/// is ideal for situations where only specific players directly compete with each other.
 /// </summary>
-public class BradleyTerryPart : OpenSkillModelBase
+public class ThurstoneMostellerPart : OpenSkillModelBase
 {
     /// <summary>
     /// The sliding window size for partial pairing such that a larger window size tends to full pairing mode accuracy.
     /// </summary>
     public int WindowSize { get; set; } = 4;
+
+    /// <summary>
+    /// Represents the draw margin for Thurstone-Mosteller models.
+    /// </summary>
+    public double Epsilon { get; set; } = 0.1;
 
     protected override IEnumerable<ITeam> Compute(
         IList<ITeam> teams,
@@ -28,7 +34,6 @@ public class BradleyTerryPart : OpenSkillModelBase
 
         return teamRatings.Select((iTeam, iTeamIndex) =>
         {
-            // Calculate omega and delta
             (double omega, double delta, int nComparisons) = teamRatings
                 .Index()
                 .Skip(Math.Max(0, iTeamIndex - WindowSize))
@@ -37,6 +42,19 @@ public class BradleyTerryPart : OpenSkillModelBase
                 .Aggregate((sumOmega: 0D, sumDelta: 0D, nComparisons: 0), (acc, q) =>
                 {
                     (int qTeamIndex, ITeamRating qTeam) = q;
+
+                    double ciq = 2 * Math.Sqrt(iTeam.SigmaSq + qTeam.SigmaSq + (2 * BetaSq));
+                    double deltaMu = (iTeam.Mu - qTeam.Mu) / ciq;
+                    double sigmaToCiq = iTeam.SigmaSq / ciq;
+                    double gamma = Gamma(
+                        ciq,
+                        teamRatings.Count,
+                        iTeam.Mu,
+                        iTeam.SigmaSq,
+                        iTeam.Players,
+                        iTeam.Rank,
+                        weights?.ElementAt(iTeamIndex)
+                    );
 
                     // Margin factor adjustment
                     double marginFactor = 1;
@@ -49,23 +67,27 @@ public class BradleyTerryPart : OpenSkillModelBase
                         }
                     }
 
-                    double ciq = Math.Sqrt(iTeam.SigmaSq + qTeam.SigmaSq + (2 * BetaSq));
-                    double piq = 1 / (1 + Math.Exp((qTeam.Mu - iTeam.Mu) * marginFactor / ciq));
-                    double sigmaToCiq = iTeam.SigmaSq / ciq;
-                    double s = Common.Score(qTeam.Rank, iTeam.Rank);
-                    double gamma = Gamma(
-                        ciq,
-                        teamRatings.Count,
-                        iTeam.Mu,
-                        iTeam.SigmaSq,
-                        iTeam.Players,
-                        iTeam.Rank,
-                        weights?.ElementAt(iTeamIndex)
-                    );
+                    if (iTeam.Rank == qTeam.Rank)
+                    {
+                        return (
+                            sumOmega: acc.sumOmega + (
+                                sigmaToCiq * Statistics.VT(deltaMu * marginFactor, Epsilon / ciq)
+                            ),
+                            sumDelta: acc.sumDelta + (
+                                gamma * sigmaToCiq / ciq * Statistics.WT(deltaMu * marginFactor, Epsilon / ciq)
+                            ),
+                            nComparisons: acc.nComparisons + 1
+                        );
+                    }
 
+                    int sign = qTeam.Rank > iTeam.Rank ? 1 : -1;
                     return (
-                        sumOmega: acc.sumOmega + (sigmaToCiq * (s - piq)),
-                        sumDelta: acc.sumDelta + (gamma * sigmaToCiq / ciq * piq * (1 - piq)),
+                        sumOmega: acc.sumOmega + (
+                            sign * sigmaToCiq * Statistics.V(sign * deltaMu * marginFactor, Epsilon / ciq)
+                        ),
+                        sumDelta: acc.sumDelta + (
+                            gamma * sigmaToCiq / ciq * Statistics.W(sign * deltaMu * marginFactor, Epsilon / ciq)
+                        ),
                         nComparisons: acc.nComparisons + 1
                     );
                 });
