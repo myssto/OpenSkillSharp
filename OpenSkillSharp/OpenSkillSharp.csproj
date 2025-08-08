@@ -4,6 +4,15 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Title>OpenSkillSharp</Title>
+        <Authors>myssto</Authors>
+        <Description>A faster, open-license alternative to Microsoft TrueSkill </Description>
+        <PackageProjectUrl>https://github.com/myssto/OpenSkillSharp</PackageProjectUrl>
+        <PackageLicenseUrl></PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/myssto/OpenSkillSharp.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>ranking, rating, elo, trueskill, openskill, bayesian</PackageTags>
+        <Copyright>Copyright (c) 2025 Patrick Lacni</Copyright>
     </PropertyGroup>
 
     <ItemGroup>
