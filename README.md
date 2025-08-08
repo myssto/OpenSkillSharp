@@ -1,3 +1,8 @@
+[![NuGet Version](https://img.shields.io/nuget/v/OpenSkillSharp)](https://img.shields.io/nuget/v/OpenSkillSharp)
+![Downloads](https://img.shields.io/nuget/dt/OpenSkillSharp)
+![Tests](https://img.shields.io/github/actions/workflow/status/myssto/OpenSkillSharp/ci.yml?label=tests)
+![License](https://img.shields.io/github/license/myssto/OpenSkillSharp)
+
 # Openskill
 
 .NET/C# implementation of Weng-Lin Rating, as described at https://www.csie.ntu.edu.tw/~cjlin/papers/online_ranking/online_journal.pdf
