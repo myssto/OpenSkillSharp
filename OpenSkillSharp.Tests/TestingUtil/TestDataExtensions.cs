@@ -1,6 +1,6 @@
 using OpenSkillSharp.Rating;
 
-namespace OpenSkillSharp.Tests.Util;
+namespace OpenSkillSharp.Tests.TestingUtil;
 
 public static class TestDataExtensions
 {

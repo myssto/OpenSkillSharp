@@ -1,6 +1,6 @@
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
-using OpenSkillSharp.Tests.Util;
+using OpenSkillSharp.Tests.TestingUtil;
 
 namespace OpenSkillSharp.Tests.Rating;
 

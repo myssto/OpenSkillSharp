@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 using OpenSkillSharp.Util;
 
-namespace OpenSkillSharp.Tests;
+namespace OpenSkillSharp.Tests.Util;
 
 public class StatisticsTests
 {

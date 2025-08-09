@@ -1,6 +1,6 @@
 using OpenSkillSharp.Util;
 
-namespace OpenSkillSharp.Tests.Extensions;
+namespace OpenSkillSharp.Tests.Util;
 
 public class EnumerableExtensionTests
 {

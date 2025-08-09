@@ -2,7 +2,7 @@ using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
 using OpenSkillSharp.Util;
 
-namespace OpenSkillSharp.Tests.Extensions;
+namespace OpenSkillSharp.Tests.Util;
 
 public class RatingExtensionTests
 {
