@@ -7,6 +7,69 @@ namespace OpenSkillSharp.Tests.Extensions;
 public class RatingExtensionTests
 {
     [Fact]
+    public void CalculateRankings_GivenPartialScores_FallsBackToTeamIndex()
+    {
+        PlackettLuce model = new();
+        List<ITeam> teams =
+        [
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] }
+        ];
+        List<double> scores = [1, 2, 3];
+
+        List<double> ranks = teams.CalculateRankings(scores.Select(s => -s).ToList()).ToList();
+
+        Assert.Equal([2, 1, 0, 3], ranks);
+    }
+    
+    [Fact]
+    public void CalculateRankings_GivenInverseScores_ProperlyConvertsToRanks()
+    {
+        PlackettLuce model = new();
+        List<ITeam> teams =
+        [
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] }
+        ];
+        List<double> scores = [3, 0, 2, 1];
+
+        List<double> ranks = teams.CalculateRankings(scores.Select(s => -s).ToList()).ToList();
+
+        Assert.Equal([0, 3, 1, 2], ranks);
+    }
+
+    [Fact]
+    public void CalculateRankings_GivenNoRanks_DefaultsToTeamIndex()
+    {
+        PlackettLuce model = new();
+        List<ITeam> teams =
+        [
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] },
+            new Team { Players = [model.Rating()] }
+        ];
+
+        List<double> ranks = teams.CalculateRankings().ToList();
+
+        Assert.Equal([0, 1, 2, 3], ranks);
+    }
+
+    [Fact]
+    public void CalculateRankings_GivenNoTeams_ProducesEmptyList()
+    {
+        List<ITeam> teams = [];
+
+        List<double> ranks = teams.CalculateRankings().ToList();
+
+        Assert.Equal([], ranks);
+    }
+    
+    [Fact]
     public void CountRankOccurrences()
     {
         PlackettLuce model = new();
