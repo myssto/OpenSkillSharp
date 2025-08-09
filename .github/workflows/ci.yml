@@ -33,7 +33,7 @@ jobs:
         run: dotnet test --no-build --no-restore --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Upload coverage report
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         uses: coveralls/github-action@v2
         with:
           format: "cobertura"
