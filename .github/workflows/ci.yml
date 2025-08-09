@@ -34,7 +34,7 @@ jobs:
 
       - name: Upload coverage report
         if: github.ref == 'refs/heads/master'
-        uses: coveralls/github-action@v2
+        uses: coverallsapp/github-action@v2
         with:
           format: "cobertura"
           file: "TestResults/**/coverage.cobertura.xml"
