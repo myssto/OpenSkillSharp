@@ -177,6 +177,44 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         ).Average();
     }
 
+    public List<(int rank, double probability)> PredictRank(IList<ITeam> teams)
+    {
+        List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
+
+        List<double> winProbabilities = teamRatings
+            .Select((iTeam, iTeamIndex) => teamRatings
+                .Where((_, qTeamIndex) => iTeamIndex != qTeamIndex)
+                .Select(qTeam => Statistics.PhiMajor(
+                    (iTeam.Mu - qTeam.Mu) /
+                    Math.Sqrt((2 * BetaSq) + iTeam.SigmaSq + qTeam.SigmaSq)
+                ))
+                .Average()
+            ).ToList();
+
+        // Normalize probabilities
+        double totalProbability = winProbabilities.Sum();
+        winProbabilities = winProbabilities.Select(p => p / totalProbability).ToList();
+        // Sort descending, preserve original index
+        List<(int index, double p)> sortedProbabilities = winProbabilities
+            .Index()
+            .OrderByDescending(p => p.Item)
+            .ToList();
+
+        int curRank = 1;
+        int[] ranks = new int[teams.Count];
+        foreach ((int index, double p) in sortedProbabilities)
+        {
+            if (index > 0 && p < sortedProbabilities[index - 1].p)
+            {
+                curRank = index + 1;
+            }
+
+            ranks[index] = curRank;
+        }
+
+        return ranks.Zip(winProbabilities).ToList();
+    }
+
     /// <summary>
     /// Creates team ratings for a game.
     /// </summary>

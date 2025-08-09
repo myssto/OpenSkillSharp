@@ -113,4 +113,11 @@ public interface IOpenSkillModel
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A number representing the odds of a draw as a percentage from 0.0 to 1.0</returns>
     public double PredictDraw(IList<ITeam> teams);
+
+    /// <summary>
+    /// Predict the shape of a match outcome.
+    /// </summary>
+    /// <param name="teams">A list of two or more teams.</param>
+    /// <returns>A list of tuples containing a team's predicted rank and the probability for each given team.</returns>
+    public List<(int rank, double probability)> PredictRank(IList<ITeam> teams);
 }
