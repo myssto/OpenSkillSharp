@@ -1,6 +1,14 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "v*"
+  pull_request:
+    branches:
+      - "**"
 
 jobs:
   test:
@@ -22,4 +30,11 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Upload coverage report
+        if: github.ref == 'refs/heads/main'
+        uses: coveralls/github-action@v2
+        with:
+          format: "cobertura"
+          file: "TestResults/**/coverage.cobertura.xml"
