@@ -71,8 +71,8 @@ public class BradleyTerryPart : OpenSkillModelBase
 
             if (nComparisons > 0)
             {
-                omega = omega / nComparisons;
-                delta = delta / nComparisons;
+                omega /= nComparisons;
+                delta /= nComparisons;
             }
 
             return new Team
