@@ -30,11 +30,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test --no-build --no-restore --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
-
-      - name: Upload coverage report
-        if: github.ref == 'refs/heads/master'
-        uses: coverallsapp/github-action@v2
-        with:
-          format: "cobertura"
-          file: "TestResults/**/coverage.cobertura.xml"
+        run: dotnet test --no-build --configuration Release --verbosity normal

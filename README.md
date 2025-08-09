@@ -1,7 +1,8 @@
 [![NuGet Version](https://img.shields.io/nuget/v/OpenSkillSharp)](https://img.shields.io/nuget/v/OpenSkillSharp)
 ![Downloads](https://img.shields.io/nuget/dt/OpenSkillSharp)
 ![Tests](https://img.shields.io/github/actions/workflow/status/myssto/OpenSkillSharp/ci.yml?label=tests)
-![License](https://img.shields.io/github/license/myssto/OpenSkillSharp)
+[![Coverage](https://img.shields.io/coverallsCoverage/github/myssto/OpenSkillSharp)](https://coveralls.io/github/myssto/OpenSkillSharp)
+[![License](https://img.shields.io/github/license/myssto/OpenSkillSharp)](https://github.com/myssto/OpenSkillSharp/blob/master/LICENSE)
 
 # Openskill
 
