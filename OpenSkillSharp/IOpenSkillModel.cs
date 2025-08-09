@@ -110,6 +110,10 @@ public interface IOpenSkillModel
     /// <summary>
     /// Predict how likely a match of teams of one or more players will conclude in a draw.
     /// </summary>
+    /// <remarks>
+    /// This measure is also commonly referred to as "match quality", as the lower the probability of a draw is in
+    /// a game, the more "one-sided" it is considered.
+    /// </remarks>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A number representing the odds of a draw as a percentage from 0.0 to 1.0</returns>
     public double PredictDraw(IList<ITeam> teams);
