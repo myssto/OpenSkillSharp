@@ -9,9 +9,9 @@ namespace OpenSkillSharp.Util;
 /// </summary>
 public static class Statistics
 {
-    private static readonly Normal Normal = new(0, 1);
     private const double Epsilon = 1e-10;
-    
+    private static readonly Normal Normal = new(0, 1);
+
     /// <summary>
     /// Computes the cumulative distribution (CDF) of the standard normal distribution at the given number.
     /// </summary>
@@ -35,7 +35,7 @@ public static class Statistics
     {
         return Normal.InverseCumulativeDistribution(x);
     }
-    
+
     /// <summary>
     /// Computes the probability density of the standard normal distribution (PDF) at the given number.
     /// </summary>
@@ -48,7 +48,10 @@ public static class Statistics
 
     /// <summary>
     /// The function <c>V</c> as defined in
-    /// <a href="https://jmlr.org/papers/v12/weng11a.html"><c>JMLR:v12:weng11a</c></a>.
+    /// <a href="https://jmlr.org/papers/v12/weng11a.html">
+    /// <c>JMLR:v12:weng11a</c>
+    /// </a>
+    /// .
     /// <br/>
     /// Represented by:
     /// <br/>
@@ -69,7 +72,10 @@ public static class Statistics
 
     /// <summary>
     /// The function <c>W</c> as defined in
-    /// <a href="https://jmlr.org/papers/v12/weng11a.html"><c>JMLR:v12:weng11a</c></a>.
+    /// <a href="https://jmlr.org/papers/v12/weng11a.html">
+    /// <c>JMLR:v12:weng11a</c>
+    /// </a>
+    /// .
     /// <br/>
     /// Represented by:
     /// <br/>
@@ -93,7 +99,10 @@ public static class Statistics
 
     /// <summary>
     /// The function <c>~V</c> as defined in
-    /// <a href="https://jmlr.org/papers/v12/weng11a.html"><c>JMLR:v12:weng11a</c></a>.
+    /// <a href="https://jmlr.org/papers/v12/weng11a.html">
+    /// <c>JMLR:v12:weng11a</c>
+    /// </a>
+    /// .
     /// <br/>
     /// Represented by:
     /// <br/>
@@ -121,7 +130,10 @@ public static class Statistics
 
     /// <summary>
     /// The function <c>~W</c> as defined in
-    /// <a href="https://jmlr.org/papers/v12/weng11a.html"><c>JMLR:v12:weng11a</c></a>.
+    /// <a href="https://jmlr.org/papers/v12/weng11a.html">
+    /// <c>JMLR:v12:weng11a</c>
+    /// </a>
+    /// .
     /// <br/>
     /// Represented by:
     /// <br/>

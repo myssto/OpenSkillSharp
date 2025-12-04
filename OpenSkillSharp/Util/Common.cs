@@ -13,8 +13,10 @@ public static class Common
     /// <returns>A number representing the score comparison of the two given ranks.</returns>
     public static double Score(double q, double i)
     {
-        return q < i ? 0
-            : q > i ? 1
-            : 0.5;
+        return q < i
+            ? 0
+            : q > i
+                ? 1
+                : 0.5;
     }
 }
