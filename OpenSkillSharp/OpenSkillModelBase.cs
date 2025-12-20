@@ -352,6 +352,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                             return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * sign;
                         }
                     )
+                    .DefaultIfEmpty(0)
                     .Average();
 
                 return qTeam.Mu + muAdjustment;
