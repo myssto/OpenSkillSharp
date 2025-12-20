@@ -25,20 +25,26 @@ public class EnumerableExtensionTests
         // Accepts 2 items
         new object[]
         {
-            new List<string> { "b", "a" }, new List<double> { 1, 0 }, new List<string> { "a", "b" },
+            new List<string> { "b", "a" },
+            new List<double> { 1, 0 },
+            new List<string> { "a", "b" },
             new List<double> { 1, 0 }
         },
         // Accepts 3 items
         new object[]
         {
-            new List<string> { "b", "c", "a" }, new List<double> { 1, 2, 0 }, new List<string> { "a", "b", "c" },
+            new List<string> { "b", "c", "a" },
+            new List<double> { 1, 2, 0 },
+            new List<string> { "a", "b", "c" },
             new List<double> { 2, 0, 1 }
         },
         // Accepts 4 items
         new object[]
         {
-            new List<string> { "b", "d", "c", "a" }, new List<double> { 1, 3, 2, 0 },
-            new List<string> { "a", "b", "c", "d" }, new List<double> { 3, 0, 2, 1 }
+            new List<string> { "b", "d", "c", "a" },
+            new List<double> { 1, 3, 2, 0 },
+            new List<string> { "a", "b", "c", "d" },
+            new List<double> { 3, 0, 2, 1 }
         }
     };
 

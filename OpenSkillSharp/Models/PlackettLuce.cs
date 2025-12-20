@@ -25,52 +25,61 @@ public class PlackettLuce : OpenSkillModelBase
         List<int> rankOccurrences = teamRatings.CountRankOccurrences().ToList();
         List<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
 
-        List<Team> result = teamRatings.Select((iTeam, iTeamIndex) =>
-        {
-            // Calculate omega and delta
-            double iMuOverC = Math.Exp(adjustedMus[iTeamIndex] / c);
-            (double omega, double delta) = teamRatings
-                .Select((qTeam, qTeamIndex) => (qTeam, qTeamIndex))
-                .Where(x => x.qTeam.Rank <= iTeam.Rank)
-                .Aggregate((sumOmega: 0D, sumDelta: 0D), (acc, q) =>
+        List<Team> result = teamRatings.Select(
+                (iTeam, iTeamIndex) =>
                 {
-                    (ITeamRating _, int qTeamIndex) = q;
-                    double iMuOverCeOverSumQ = iMuOverC / sumQ[qTeamIndex];
+                    // Calculate omega and delta
+                    double iMuOverC = Math.Exp(adjustedMus[iTeamIndex] / c);
+                    (double omega, double delta) = teamRatings
+                        .Select((qTeam, qTeamIndex) => (qTeam, qTeamIndex))
+                        .Where(x => x.qTeam.Rank <= iTeam.Rank)
+                        .Aggregate(
+                            (sumOmega: 0D, sumDelta: 0D),
+                            (acc, q) =>
+                            {
+                                (ITeamRating _, int qTeamIndex) = q;
+                                double iMuOverCeOverSumQ = iMuOverC / sumQ[qTeamIndex];
 
-                    return (
-                        sumOmega: acc.sumOmega + (
-                            iTeamIndex == qTeamIndex
-                                ? 1 - (iMuOverCeOverSumQ / rankOccurrences[qTeamIndex])
-                                : -1 * iMuOverCeOverSumQ / rankOccurrences[qTeamIndex]
-                        ),
-                        sumDelta: acc.sumDelta +
-                                  (iMuOverCeOverSumQ * (1 - iMuOverCeOverSumQ) / rankOccurrences[qTeamIndex])
+                                return (
+                                    sumOmega: acc.sumOmega +
+                                              (
+                                                  iTeamIndex == qTeamIndex
+                                                      ? (1 - iMuOverCeOverSumQ) / rankOccurrences[qTeamIndex]
+                                                      : -1 * iMuOverCeOverSumQ / rankOccurrences[qTeamIndex]
+                                              ),
+                                    sumDelta: acc.sumDelta +
+                                              (iMuOverCeOverSumQ *
+                                               (1 - iMuOverCeOverSumQ) /
+                                               rankOccurrences[qTeamIndex])
+                                );
+                            }
+                        );
+
+                    omega *= iTeam.SigmaSq / c;
+                    delta *= iTeam.SigmaSq / Math.Pow(c, 2);
+                    delta *= Gamma(
+                        c,
+                        teamRatings.Count,
+                        iTeam.Mu,
+                        iTeam.SigmaSq,
+                        iTeam.Players,
+                        iTeam.Rank,
+                        weights?.ElementAtOrDefault(iTeamIndex)
                     );
-                });
 
-            omega *= iTeam.SigmaSq / c;
-            delta *= iTeam.SigmaSq / Math.Pow(c, 2);
-            delta *= Gamma(
-                c,
-                teamRatings.Count,
-                iTeam.Mu,
-                iTeam.SigmaSq,
-                iTeam.Players,
-                iTeam.Rank,
-                weights?.ElementAtOrDefault(iTeamIndex)
-            );
-
-            return new Team
-            {
-                Players = UpdatePlayerRatings(
-                    teams[iTeamIndex],
-                    iTeam,
-                    omega,
-                    delta,
-                    weights?.ElementAtOrDefault(iTeamIndex)
-                )
-            };
-        }).ToList();
+                    return new Team
+                    {
+                        Players = UpdatePlayerRatings(
+                            teams[iTeamIndex],
+                            iTeam,
+                            omega,
+                            delta,
+                            weights?.ElementAtOrDefault(iTeamIndex)
+                        )
+                    };
+                }
+            )
+            .ToList();
 
         AdjustPlayerMuChangeForTie(teams, teamRatings, result);
 
