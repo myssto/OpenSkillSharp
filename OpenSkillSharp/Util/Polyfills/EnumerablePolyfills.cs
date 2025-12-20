@@ -2,7 +2,7 @@
 // ReSharper disable once CheckNamespace
 namespace System.Linq;
 
-internal static class EnumerableIndexPolyfill
+internal static class EnumerablePolyfills
 {
     /// <summary>Returns an enumerable that incorporates the element's index into a tuple.</summary>
     /// <typeparam name="TSource">The type of the elements of <paramref name="source" />.</typeparam>
