@@ -153,7 +153,7 @@ public class PlackettLuceTests
     [Fact]
     public void Rate_AllScoresTied()
     {
-        PlackettLuce model = new PlackettLuce { Mu = 30, Sigma = 30.0 / 3 };
+        PlackettLuce model = new() { Mu = 30, Sigma = 30.0 / 3 };
 
         ITeam[] teams = [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }];
         ITeam[] result = model.Rate(teams, scores: [0, 0]).ToArray();
