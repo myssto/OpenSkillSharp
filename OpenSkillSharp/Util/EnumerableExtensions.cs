@@ -2,11 +2,24 @@ namespace OpenSkillSharp.Util;
 
 public static class EnumerableExtensions
 {
+    /// <summary>
+    /// Compares the length of two lists.
+    /// </summary>
+    /// <param name="source">Source list.</param>
+    /// <param name="target">Target list.</param>
+    /// <returns>Whether the given lists are of equal length.</returns>
     public static bool IsEqualLengthTo<T, K>(this IEnumerable<T> source, IEnumerable<K> target)
     {
         return source.Count() == target.Count();
     }
 
+    /// <summary>
+    /// Normalizes a list of numbers to a given range.
+    /// </summary>
+    /// <param name="source">A list of numbers.</param>
+    /// <param name="min">Minimum value.</param>
+    /// <param name="max">Maximum value.</param>
+    /// <returns>A list of numbers normalized to the given range.</returns>
     public static IList<double> Normalize(this IList<double> source, double min, double max)
     {
         if (source.Count == 1)

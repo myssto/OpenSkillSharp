@@ -24,11 +24,9 @@ public class ModelUtilTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] }
-            ]
-        ).ToList();
+                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating(), model.Rating()] }]
+            )
+            .ToList();
 
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
 
@@ -40,11 +38,18 @@ public class ModelUtilTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] }
-            ]
-        ).ToList();
+                [
+                    new Team
+                    {
+                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
+                    },
+                    new Team
+                    {
+                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
+                    }
+                ]
+            )
+            .ToList();
 
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
 
@@ -56,11 +61,9 @@ public class ModelUtilTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] }
-            ]
-        ).ToList();
+                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating(), model.Rating()] }]
+            )
+            .ToList();
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
 
         IEnumerable<double> sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma);
@@ -73,11 +76,18 @@ public class ModelUtilTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()] }
-            ]
-        ).ToList();
+                [
+                    new Team
+                    {
+                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
+                    },
+                    new Team
+                    {
+                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
+                    }
+                ]
+            )
+            .ToList();
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
 
         List<double> sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma).ToList();

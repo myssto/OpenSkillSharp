@@ -56,12 +56,9 @@ public class PredictWinTests
     [Fact]
     public void PredictWin_MultipleAsymmetricTeams()
     {
-        List<double> probabilities = _model.PredictWin([
-            _team1,
-            _team2,
-            new Team { Players = [_a2] },
-            new Team { Players = [_b2] }
-        ]).ToList();
+        List<double> probabilities = _model
+            .PredictWin([_team1, _team2, new Team { Players = [_a2] }, new Team { Players = [_b2] }])
+            .ToList();
 
         Assert.Equal(0.32579822053781543, probabilities.ElementAt(0), Tolerance);
         Assert.Equal(0.49965489287103865, probabilities.ElementAt(1), Tolerance);
@@ -73,12 +70,15 @@ public class PredictWinTests
     [Fact]
     public void PredictWin_4PlayerFFA_VaryingSkill()
     {
-        List<double> probabilities = _model.PredictWin([
-            new Team { Players = [_model.Rating(1, 0.1)] },
-            new Team { Players = [_model.Rating(2, 0.1)] },
-            new Team { Players = [_model.Rating(3, 0.1)] },
-            new Team { Players = [_model.Rating(4, 0.1)] }
-        ]).ToList();
+        List<double> probabilities = _model.PredictWin(
+                [
+                    new Team { Players = [_model.Rating(1, 0.1)] },
+                    new Team { Players = [_model.Rating(2, 0.1)] },
+                    new Team { Players = [_model.Rating(3, 0.1)] },
+                    new Team { Players = [_model.Rating(4, 0.1)] }
+                ]
+            )
+            .ToList();
 
         Assert.Equal(0.20281164759988402, probabilities.ElementAt(0), Tolerance);
         Assert.Equal(0.2341964232088598, probabilities.ElementAt(1), Tolerance);
@@ -90,13 +90,16 @@ public class PredictWinTests
     [Fact]
     public void PredictWin_5PlayerFFA_WithImposter()
     {
-        List<double> probabilities = _model.PredictWin([
-            new Team { Players = [_a1] },
-            new Team { Players = [_a1] },
-            new Team { Players = [_a1] },
-            new Team { Players = [_a2] },
-            new Team { Players = [_a1] }
-        ]).ToList();
+        List<double> probabilities = _model.PredictWin(
+                [
+                    new Team { Players = [_a1] },
+                    new Team { Players = [_a1] },
+                    new Team { Players = [_a1] },
+                    new Team { Players = [_a2] },
+                    new Team { Players = [_a1] }
+                ]
+            )
+            .ToList();
 
         Assert.Equal(0.1790804191839367, probabilities.ElementAt(0), Tolerance);
         Assert.Equal(0.1790804191839367, probabilities.ElementAt(1), Tolerance);

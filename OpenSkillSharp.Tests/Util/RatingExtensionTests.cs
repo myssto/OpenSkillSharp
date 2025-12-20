@@ -23,7 +23,7 @@ public class RatingExtensionTests
 
         Assert.Equal([2, 1, 0, 3], ranks);
     }
-    
+
     [Fact]
     public void CalculateRankings_GivenInverseScores_ProperlyConvertsToRanks()
     {
@@ -68,17 +68,15 @@ public class RatingExtensionTests
 
         Assert.Equal([], ranks);
     }
-    
+
     [Fact]
     public void CountRankOccurrences()
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] }
-            ]
-        ).ToList();
+                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating(), model.Rating()] }]
+            )
+            .ToList();
 
         List<int> rankOccurrences = teamRatings.CountRankOccurrences().ToList();
 
@@ -90,13 +88,14 @@ public class RatingExtensionTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] },
-                new Team { Players = [model.Rating()] }
-            ]
-        ).ToList();
+                [
+                    new Team { Players = [model.Rating()] },
+                    new Team { Players = [model.Rating(), model.Rating()] },
+                    new Team { Players = [model.Rating(), model.Rating()] },
+                    new Team { Players = [model.Rating()] }
+                ]
+            )
+            .ToList();
 
         List<int> rankOccurrences = teamRatings.CountRankOccurrences().ToList();
 
@@ -108,14 +107,15 @@ public class RatingExtensionTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-            [
-                new Team { Players = [model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] },
-                new Team { Players = [model.Rating(), model.Rating()] },
-                new Team { Players = [model.Rating()] }
-            ],
-            [1, 1, 1, 4]
-        ).ToList();
+                [
+                    new Team { Players = [model.Rating()] },
+                    new Team { Players = [model.Rating(), model.Rating()] },
+                    new Team { Players = [model.Rating(), model.Rating()] },
+                    new Team { Players = [model.Rating()] }
+                ],
+                [1, 1, 1, 4]
+            )
+            .ToList();
 
         List<int> rankOccurrences = teamRatings.CountRankOccurrences().ToList();
 

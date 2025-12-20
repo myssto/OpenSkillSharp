@@ -169,11 +169,9 @@ public class BradleyTerryPartTests
 
         // Act
         List<ITeam> results = windowTauModel.Rate(
-            [
-                new Team { Players = [playerA] },
-                new Team { Players = [playerB] }
-            ]
-        ).ToList();
+                [new Team { Players = [playerA] }, new Team { Players = [playerB] }]
+            )
+            .ToList();
 
         // Assert
         Assertions.RatingsEqual(playerA, results.ElementAt(0).Players.ElementAt(0));

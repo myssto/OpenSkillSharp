@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Title>OpenSkillSharp</Title>
         <Authors>myssto</Authors>
-        <Description>A faster, open-license alternative to Microsoft TrueSkill </Description>
+        <Description>A faster, open-license alternative to Microsoft TrueSkill</Description>
         <PackageProjectUrl>https://github.com/myssto/OpenSkillSharp</PackageProjectUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageReadmeFile>README.md</PackageReadmeFile>
