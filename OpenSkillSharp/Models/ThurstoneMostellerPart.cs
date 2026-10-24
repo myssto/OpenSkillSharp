@@ -13,7 +13,7 @@ namespace OpenSkillSharp.Models;
 public class ThurstoneMostellerPart : OpenSkillModelBase
 {
     /// <summary>
-    /// The sliding window size for partial pairing such that a larger window size tends to full pairing mode accuracy.
+    /// The sliding window size for partial pairing such that a larger window size tends to full pairing mode's accuracy.
     /// </summary>
     public int WindowSize { get; set; } = 4;
 
@@ -31,8 +31,7 @@ public class ThurstoneMostellerPart : OpenSkillModelBase
     {
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams, ranks).ToList();
 
-        return teamRatings.Select(
-                (iTeam, iTeamIndex) =>
+        return teamRatings.Select((iTeam, iTeamIndex) =>
                 {
                     (double omega, double delta, int nComparisons) = teamRatings
                         .Index()
@@ -59,13 +58,13 @@ public class ThurstoneMostellerPart : OpenSkillModelBase
                                 );
 
                                 // Margin factor adjustment
-                                double marginFactor = 1;
+                                double marginDivisor = 1;
                                 if (scores is not null)
                                 {
                                     double scoreDiff = Math.Abs(scores[qTeamIndex] - scores[iTeamIndex]);
-                                    if (scoreDiff > 0 && Margin > 0 && scoreDiff > Margin && qTeam.Rank < iTeam.Rank)
+                                    if (scoreDiff > 0 && Margin > 0 && scoreDiff > Margin)
                                     {
-                                        marginFactor = Math.Log(1 + (scoreDiff / Margin));
+                                        marginDivisor = Math.Log(1 + (scoreDiff / Margin));
                                     }
                                 }
 
@@ -74,14 +73,14 @@ public class ThurstoneMostellerPart : OpenSkillModelBase
                                     return (
                                         sumOmega: acc.sumOmega +
                                                   (
-                                                      sigmaToCiq * Statistics.VT(deltaMu * marginFactor, Epsilon / ciq)
+                                                      sigmaToCiq * Statistics.VT(deltaMu / marginDivisor, Epsilon / ciq)
                                                   ),
                                         sumDelta: acc.sumDelta +
                                                   (
                                                       gamma *
                                                       sigmaToCiq /
                                                       ciq *
-                                                      Statistics.WT(deltaMu * marginFactor, Epsilon / ciq)
+                                                      Statistics.WT(deltaMu / marginDivisor, Epsilon / ciq)
                                                   ),
                                         nComparisons: acc.nComparisons + 1
                                     );
@@ -93,14 +92,14 @@ public class ThurstoneMostellerPart : OpenSkillModelBase
                                               (
                                                   sign *
                                                   sigmaToCiq *
-                                                  Statistics.V(sign * deltaMu * marginFactor, Epsilon / ciq)
+                                                  Statistics.V(sign * deltaMu / marginDivisor, Epsilon / ciq)
                                               ),
                                     sumDelta: acc.sumDelta +
                                               (
                                                   gamma *
                                                   sigmaToCiq /
                                                   ciq *
-                                                  Statistics.W(sign * deltaMu * marginFactor, Epsilon / ciq)
+                                                  Statistics.W(sign * deltaMu / marginDivisor, Epsilon / ciq)
                                               ),
                                     nComparisons: acc.nComparisons + 1
                                 );

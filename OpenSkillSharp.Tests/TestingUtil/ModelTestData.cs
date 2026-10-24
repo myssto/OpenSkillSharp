@@ -76,8 +76,7 @@ public class ModelTestData
 
     private static IList<ITeam> ConvertDictionaryData(Dictionary<string, List<TestData>> data)
     {
-        return data.Select(
-                kvp => new Team
+        return data.Select(kvp => new Team
                 {
                     Players = kvp.Value.Select(d => new OpenSkillSharp.Rating.Rating { Mu = d.Mu, Sigma = d.Sigma })
                 }

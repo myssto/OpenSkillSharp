@@ -41,6 +41,26 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         double? tau = null
     )
     {
+        // * Catch teams argument errors
+        if (teams.Count < 2)
+        {
+            throw new ArgumentException(
+                $"Argument '{nameof(teams)}' must have at least 2 teams, not {teams.Count}."
+            );
+        }
+
+        foreach ((int idx, int teamSize) in teams.Select(team => team.Players.Count()).Index())
+        {
+            if (teamSize < 1)
+            {
+                throw new ArgumentException(
+                    $"Argument '{nameof(teams)}' must have at least 1 player per team. " +
+                    $"Team at index {idx} contains {teamSize} players."
+                );
+            }
+        }
+
+        // * Catch ranks argument errors
         if (ranks is not null)
         {
             if (!ranks.IsEqualLengthTo(teams))
@@ -50,6 +70,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                 );
             }
 
+            // * Catch scores and ranks together
             if (scores is not null)
             {
                 throw new ArgumentException(
@@ -58,11 +79,13 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             }
         }
 
+        // * Catch scores arguments errors
         if (scores is not null && !scores.IsEqualLengthTo(teams))
         {
             throw new ArgumentException($"Arguments '{nameof(scores)}' and '{nameof(teams)}' must be of equal length.");
         }
 
+        // * Catch weights argument errors
         if (weights is not null)
         {
             if (!weights.IsEqualLengthTo(teams))
@@ -83,11 +106,11 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             }
         }
 
-        // Create a deep copy of the given teams
+        // * Deep copy teams
         IList<ITeam> originalTeams = teams;
         teams = originalTeams.Select(t => t.Clone()).ToList();
 
-        // Correct sigma
+        // * Correct Sigma with Tau
         tau ??= Tau;
         double tauSq = Math.Pow(tau.Value, 2);
         foreach (IRating player in teams.SelectMany(t => t.Players))
@@ -95,13 +118,13 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             player.Sigma = Math.Sqrt((player.Sigma * player.Sigma) + tauSq);
         }
 
-        // Convert score to ranks
+        // * Convert score to ranks
         if (ranks is null && scores is not null)
         {
             ranks = teams.CalculateRankings(scores.Select(s => -s).ToList()).ToList();
         }
 
-        // Normalize weights
+        // * Normalize weights
         weights = weights?.Select(w => w.Normalize(1, 2)).ToList();
 
         IList<double>? tenet = null;
@@ -112,6 +135,11 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             if (weights is not null)
             {
                 (weights, _) = ranks.Unwind(weights);
+            }
+
+            if (scores is not null)
+            {
+                (scores, _) = ranks.Unwind(scores);
             }
 
             tenet = orderedRanks;
@@ -152,15 +180,14 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         int n = teams.Count;
         int denominator = n * (n - 1) / 2;
 
-        return teamRatings.Select(
-            (teamA, idx) => teamRatings
-                                .Where((_, idy) => idx != idy)
-                                .Sum(
-                                    teamB => Statistics.PhiMajor(
-                                        (teamA.Mu - teamB.Mu) / Math.Sqrt((n * BetaSq) + teamA.SigmaSq + teamB.SigmaSq)
-                                    )
-                                ) /
-                            denominator
+        return teamRatings.Select((teamA, idx) => teamRatings
+                                                      .Where((_, idy) => idx != idy)
+                                                      .Sum(teamB => Statistics.PhiMajor(
+                                                              (teamA.Mu - teamB.Mu) /
+                                                              Math.Sqrt((n * BetaSq) + teamA.SigmaSq + teamB.SigmaSq)
+                                                          )
+                                                      ) /
+                                                  denominator
         );
     }
 
@@ -172,18 +199,16 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         double drawProbability = 1D / playerCount;
         double drawMargin = Math.Sqrt(playerCount) * Beta * Statistics.InversePhiMajor((1 + drawProbability) / 2D);
 
-        return teamRatings.SelectMany(
-                (teamA, i) =>
-                    teamRatings
-                        .Skip(i + 1)
-                        .Select(
-                            teamB =>
-                            {
-                                double denominator = Math.Sqrt((playerCount * BetaSq) + teamA.SigmaSq + teamB.SigmaSq);
-                                return Statistics.PhiMajor((drawMargin - teamA.Mu + teamB.Mu) / denominator) -
-                                       Statistics.PhiMajor((teamB.Mu - teamA.Mu - drawMargin) / denominator);
-                            }
-                        )
+        return teamRatings.SelectMany((teamA, i) =>
+                teamRatings
+                    .Skip(i + 1)
+                    .Select(teamB =>
+                        {
+                            double denominator = Math.Sqrt((playerCount * BetaSq) + teamA.SigmaSq + teamB.SigmaSq);
+                            return Statistics.PhiMajor((drawMargin - teamA.Mu + teamB.Mu) / denominator) -
+                                   Statistics.PhiMajor((teamB.Mu - teamA.Mu - drawMargin) / denominator);
+                        }
+                    )
             )
             .Average();
     }
@@ -193,16 +218,14 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
 
         List<double> winProbabilities = teamRatings
-            .Select(
-                (iTeam, iTeamIndex) => teamRatings
-                    .Where((_, qTeamIndex) => iTeamIndex != qTeamIndex)
-                    .Select(
-                        qTeam => Statistics.PhiMajor(
-                            (iTeam.Mu - qTeam.Mu) /
-                            Math.Sqrt((2 * BetaSq) + iTeam.SigmaSq + qTeam.SigmaSq)
-                        )
+            .Select((iTeam, iTeamIndex) => teamRatings
+                .Where((_, qTeamIndex) => iTeamIndex != qTeamIndex)
+                .Select(qTeam => Statistics.PhiMajor(
+                        (iTeam.Mu - qTeam.Mu) /
+                        Math.Sqrt((2 * BetaSq) + iTeam.SigmaSq + qTeam.SigmaSq)
                     )
-                    .Average()
+                )
+                .Average()
             )
             .ToList();
 
@@ -245,8 +268,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     {
         ranks ??= teams.CalculateRankings().ToList();
 
-        return teams.Select(
-            (team, index) =>
+        return teams.Select((team, index) =>
             {
                 double maxOrdinal = team.Players.Max(p => p.Ordinal);
                 (double sumMu, double sumSigmaSq) = team.Players
@@ -302,12 +324,11 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         // Calculate margin adjustment for team mu values if ranks are provided
         List<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
 
-        return teamRatings.Select(
-            qTeam => teamRatings
-                .Select((iTeam, iTeamIndex) => (iTeam, iTeamIndex))
-                .Where(x => x.iTeam.Rank >= qTeam.Rank)
-                .Select(x => Math.Exp(adjustedMus[x.iTeamIndex] / c))
-                .Sum()
+        return teamRatings.Select(qTeam => teamRatings
+            .Select((iTeam, iTeamIndex) => (iTeam, iTeamIndex))
+            .Where(x => x.iTeam.Rank >= qTeam.Rank)
+            .Select(x => Math.Exp(adjustedMus[x.iTeamIndex] / c))
+            .Sum()
         );
     }
 
@@ -330,17 +351,14 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             return teamRatings.Select(t => t.Mu);
         }
 
-        return teamRatings.Select(
-            (qTeam, qTeamIndex) =>
+        return teamRatings.Select((qTeam, qTeamIndex) =>
             {
                 double qTeamScore = scores[qTeamIndex];
                 double muAdjustment = teamRatings
-                    .Where(
-                        (_, iTeamIndex) =>
-                            qTeamIndex != iTeamIndex && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
+                    .Where((_, iTeamIndex) =>
+                        qTeamIndex != iTeamIndex && Math.Abs(qTeamScore - scores[iTeamIndex]) > 0
                     )
-                    .Select(
-                        (iTeam, iTeamIndex) =>
+                    .Select((iTeam, iTeamIndex) =>
                         {
                             double iTeamScore = scores[iTeamIndex];
                             double scoreDiff = Math.Abs(qTeamScore - iTeamScore);
@@ -348,7 +366,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                                 ? Math.Log(1 + (scoreDiff / Margin))
                                 : 1D;
 
-                            double sign = qTeamScore > iTeamScore ? 1D : -1D;
+                            double sign = qTeamScore > iTeamScore ? -1D : 1D;
                             return (qTeam.Mu - iTeam.Mu) * (marginFactor - 1) * sign;
                         }
                     )
@@ -379,8 +397,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         IEnumerable<double>? weights
     )
     {
-        return team.Players.Select(
-                (_, jPlayerIndex) =>
+        return team.Players.Select((_, jPlayerIndex) =>
                 {
                     IRating modifiedPlayer = originalTeam.Players.ElementAt(jPlayerIndex);
                     double weight = weights?.ElementAtOrDefault(jPlayerIndex) ?? 1D;
@@ -423,9 +440,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
         foreach (List<int> teamIndices in rankGroups.Values.Where(g => g.Count > 1))
         {
-            double avgMuChange = teamIndices.Average(
-                i =>
-                    processedTeamsList[i].Players.First().Mu - originalTeams[i].Players.First().Mu
+            double avgMuChange = teamIndices.Average(i =>
+                processedTeamsList[i].Players.First().Mu - originalTeams[i].Players.First().Mu
             );
 
             foreach (int teamIndex in teamIndices)

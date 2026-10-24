@@ -25,8 +25,7 @@ public class PlackettLuce : OpenSkillModelBase
         List<int> rankOccurrences = teamRatings.CountRankOccurrences().ToList();
         List<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
 
-        List<Team> result = teamRatings.Select(
-                (iTeam, iTeamIndex) =>
+        List<Team> result = teamRatings.Select((iTeam, iTeamIndex) =>
                 {
                     // Calculate omega and delta
                     double iMuOverC = Math.Exp(adjustedMus[iTeamIndex] / c);

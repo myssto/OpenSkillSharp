@@ -9,54 +9,54 @@ public interface IOpenSkillModel
     /// Represents the initial belief about the skill of a player before any matches have been played.
     /// Known mostly as the mean of the Gaussian prior distribution.
     /// </summary>
-    public double Mu { get; set; }
+    double Mu { get; set; }
 
     /// <summary>
     /// Standard deviation of the prior distribution of the player.
     /// </summary>
-    public double Sigma { get; set; }
+    double Sigma { get; set; }
 
     /// <summary>
     /// Hyperparameter that determines the level of uncertainty or variability present in the prior
     /// distribution of ratings.
     /// </summary>
-    public double Beta { get; set; }
+    double Beta { get; set; }
 
     /// <summary>
     /// The value of <see cref="Beta"/> squared.
     /// </summary>
-    public double BetaSq { get; }
+    double BetaSq { get; }
 
     /// <summary>
     /// Arbitrary, small, positive, real number that is used to prevent the variance of the posterior distribution
     /// from becoming too small or negative. It can also be thought of as a regularization parameter.
     /// </summary>
-    public double Kappa { get; set; }
+    double Kappa { get; set; }
 
     /// <summary>
     /// Function used as the formula to calculate gamma.
     /// </summary>
-    public GammaFactory Gamma { get; set; }
+    GammaFactory Gamma { get; set; }
 
     /// <summary>
     /// Additive dynamics parameter that prevents sigma from getting too small to increase rating change volatility.
     /// </summary>
-    public double Tau { get; set; }
+    double Tau { get; set; }
 
     /// <summary>
     /// The margin of victory needed for a win to be considered impressive.
     /// </summary>
-    public double Margin { get; set; }
+    double Margin { get; set; }
 
     /// <summary>
     /// Determines whether to restrict the value of sigma from increasing.
     /// </summary>
-    public bool LimitSigma { get; set; }
+    bool LimitSigma { get; set; }
 
     /// <summary>
     /// Determines whether to emphasize rating outliers.
     /// </summary>
-    public bool Balance { get; set; }
+    bool Balance { get; set; }
 
     /// <summary>
     /// Creates a new rating object with the configured defaults for this model. The given parameters can
@@ -70,7 +70,7 @@ public interface IOpenSkillModel
     /// Standard deviation of the prior distribution of the player.
     /// </param>
     /// <returns>A new rating object.</returns>
-    public IRating Rating(double? mu = null, double? sigma = null);
+    IRating Rating(double? mu = null, double? sigma = null);
 
     /// <summary>
     /// Calculate the new ratings based on the given teams and parameters.
@@ -92,7 +92,7 @@ public interface IOpenSkillModel
     /// <returns>
     /// A list of teams where each team contains a list of updated rating objects.
     /// </returns>
-    public IEnumerable<ITeam> Rate(
+    IEnumerable<ITeam> Rate(
         IList<ITeam> teams,
         IList<double>? ranks = null,
         IList<double>? scores = null,
@@ -105,7 +105,7 @@ public interface IOpenSkillModel
     /// </summary>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A list of numbers representing the odds of each team winning.</returns>
-    public IEnumerable<double> PredictWin(IList<ITeam> teams);
+    IEnumerable<double> PredictWin(IList<ITeam> teams);
 
     /// <summary>
     /// Predict how likely a match of teams of one or more players will conclude in a draw.
@@ -116,12 +116,12 @@ public interface IOpenSkillModel
     /// </remarks>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A number representing the odds of a draw as a percentage from 0.0 to 1.0</returns>
-    public double PredictDraw(IList<ITeam> teams);
+    double PredictDraw(IList<ITeam> teams);
 
     /// <summary>
     /// Predict the shape of a match outcome.
     /// </summary>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A list of tuples containing a team's predicted rank and the probability for each given team.</returns>
-    public List<(int rank, double probability)> PredictRank(IList<ITeam> teams);
+    List<(int rank, double probability)> PredictRank(IList<ITeam> teams);
 }

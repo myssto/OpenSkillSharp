@@ -26,8 +26,7 @@ public class ThurstoneMostellerFull : OpenSkillModelBase
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams, ranks).ToList();
 
         List<Team> result = teamRatings
-            .Select(
-                (iTeam, iTeamIndex) =>
+            .Select((iTeam, iTeamIndex) =>
                 {
                     // Calculate omega and delta
                     (double omega, double delta) = teamRatings
@@ -53,13 +52,13 @@ public class ThurstoneMostellerFull : OpenSkillModelBase
                                 );
 
                                 // Margin factor adjustment
-                                double marginFactor = 1;
+                                double marginDivisor = 1;
                                 if (scores is not null)
                                 {
                                     double scoreDiff = Math.Abs(scores[qTeamIndex] - scores[iTeamIndex]);
-                                    if (scoreDiff > 0 && Margin > 0 && scoreDiff > Margin && qTeam.Rank < iTeam.Rank)
+                                    if (scoreDiff > 0 && Margin > 0 && scoreDiff > Margin)
                                     {
-                                        marginFactor = Math.Log(1 + (scoreDiff / Margin));
+                                        marginDivisor = Math.Log(1 + (scoreDiff / Margin));
                                     }
                                 }
 
@@ -68,14 +67,14 @@ public class ThurstoneMostellerFull : OpenSkillModelBase
                                     return (
                                         sumOmega: acc.sumOmega +
                                                   (
-                                                      sigmaToCiq * Statistics.VT(deltaMu * marginFactor, Epsilon / ciq)
+                                                      sigmaToCiq * Statistics.VT(deltaMu / marginDivisor, Epsilon / ciq)
                                                   ),
                                         sumDelta: acc.sumDelta +
                                                   (
                                                       gamma *
                                                       sigmaToCiq /
                                                       ciq *
-                                                      Statistics.WT(deltaMu * marginFactor, Epsilon / ciq)
+                                                      Statistics.WT(deltaMu / marginDivisor, Epsilon / ciq)
                                                   )
                                     );
                                 }
@@ -86,14 +85,14 @@ public class ThurstoneMostellerFull : OpenSkillModelBase
                                               (
                                                   sign *
                                                   sigmaToCiq *
-                                                  Statistics.V(sign * deltaMu * marginFactor, Epsilon / ciq)
+                                                  Statistics.V(sign * deltaMu / marginDivisor, Epsilon / ciq)
                                               ),
                                     sumDelta: acc.sumDelta +
                                               (
                                                   gamma *
                                                   sigmaToCiq /
                                                   ciq *
-                                                  Statistics.W(sign * deltaMu * marginFactor, Epsilon / ciq)
+                                                  Statistics.W(sign * deltaMu / marginDivisor, Epsilon / ciq)
                                               )
                                 );
                             }
