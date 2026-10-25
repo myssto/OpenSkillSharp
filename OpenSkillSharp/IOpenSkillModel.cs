@@ -64,7 +64,7 @@ public interface IOpenSkillModel
     /// <br/>
     /// The default value is <c>(1.0, 2.0)</c>. Can be set to <see langword="null"/> to disable weight normalization.
     /// </summary>
-    Tuple<double, double>? WeightBounds { get; set; }
+    (double Min, double Max)? WeightBounds { get; set; }
 
     /// <summary>
     /// Creates a new rating object with the configured defaults for this model. The given parameters can

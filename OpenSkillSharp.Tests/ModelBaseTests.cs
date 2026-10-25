@@ -1,5 +1,6 @@
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
+using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp.Tests;
 
@@ -33,17 +34,16 @@ public class ModelBaseTests
     {
         PlackettLuce model = new();
 
-        Assert.Equal(25D, model.Mu);
-        Assert.Equal(25D / 3, model.Sigma);
-        Assert.Equal(25D / 6, model.Beta);
-        Assert.Equal(0.0001, model.Kappa);
-        Assert.Equal(25D / 300, model.Tau);
+        Assert.Equal(ModelDefaults.Mu, model.Mu);
+        Assert.Equal(ModelDefaults.Sigma, model.Sigma);
+        Assert.Equal(ModelDefaults.Beta, model.Beta);
+        Assert.Equal(ModelDefaults.Kappa, model.Kappa);
+        Assert.Equal(ModelDefaults.Tau, model.Tau);
         Assert.False(model.LimitSigma);
         Assert.False(model.Balance);
         Assert.NotNull(model.WeightBounds);
-        (double min, double max) = model.WeightBounds;
-        Assert.Equal(1.0, min);
-        Assert.Equal(2.0, max);
+        Assert.Equal(ModelDefaults.WeightBounds.Min, model.WeightBounds.Value.Min);
+        Assert.Equal(ModelDefaults.WeightBounds.Max, model.WeightBounds.Value.Max);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class ModelBaseTests
     {
         IOpenSkillModel modelDefault = (IOpenSkillModel)Activator.CreateInstance(modelType)!;
         IOpenSkillModel modelNarrow = (IOpenSkillModel)Activator.CreateInstance(modelType)!;
-        modelNarrow.WeightBounds = new Tuple<double, double>(0.9, 1.1);
+        modelNarrow.WeightBounds = (0.9, 1.1);
         IList<IList<double>> weights = [[0.5, 1.0, 2.0], [1.0, 1.0, 1.0]];
 
         List<ITeam> resultDefault = modelDefault.Rate(

@@ -8,19 +8,19 @@ namespace OpenSkillSharp;
 /// </summary>
 public abstract class OpenSkillModelBase : IOpenSkillModel
 {
-    public double Mu { get; set; } = 25D;
+    public double Mu { get; set; } = ModelDefaults.Mu;
 
-    public double Sigma { get; set; } = 25D / 3;
+    public double Sigma { get; set; } = ModelDefaults.Sigma;
 
-    public double Beta { get; set; } = 25D / 6;
+    public double Beta { get; set; } = ModelDefaults.Beta;
 
     public double BetaSq => Math.Pow(Beta, 2);
 
-    public double Kappa { get; set; } = 0.0001;
+    public double Kappa { get; set; } = ModelDefaults.Kappa;
 
-    public GammaFactory Gamma { get; set; } = DefaultGamma;
+    public GammaFactory Gamma { get; set; } = ModelDefaults.Gamma;
 
-    public double Tau { get; set; } = 25D / 300;
+    public double Tau { get; set; } = ModelDefaults.Tau;
 
     public double Margin { get; set; }
 
@@ -28,7 +28,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
     public bool Balance { get; set; }
 
-    public Tuple<double, double>? WeightBounds { get; set; } = new(1.0, 2.0);
+    public (double Min, double Max)? WeightBounds { get; set; } = ModelDefaults.WeightBounds;
 
     public IRating Rating(double? mu = null, double? sigma = null)
     {
@@ -129,7 +129,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         // * Normalize weights
         if (weights is not null && WeightBounds is not null)
         {
-            (double min, double max) = WeightBounds;
+            (double min, double max) = WeightBounds.Value;
             weights = weights.Select(w => w.Normalize(min, max)).ToList();
         }
 
@@ -163,6 +163,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             finalResult = Compute(teams, weights: weights).ToList();
         }
 
+        // ReSharper disable once InvertIf
         if (LimitSigma)
         {
             foreach ((int teamIdx, ITeam team) in finalResult.Index())
