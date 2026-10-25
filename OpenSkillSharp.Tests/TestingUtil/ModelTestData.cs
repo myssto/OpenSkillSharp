@@ -8,7 +8,7 @@ namespace OpenSkillSharp.Tests.TestingUtil;
 
 public class ModelTestData
 {
-    private static readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions SerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
     [JsonPropertyName("normal")]
     public Dictionary<string, List<TestData>> NormalData { get; init; } = null!;
@@ -71,7 +71,7 @@ public class ModelTestData
         }
 
         string json = File.ReadAllText(dataPath);
-        return JsonSerializer.Deserialize<ModelTestData>(json, _serializerOptions)!;
+        return JsonSerializer.Deserialize<ModelTestData>(json, SerializerOptions)!;
     }
 
     private static IList<ITeam> ConvertDictionaryData(Dictionary<string, List<TestData>> data)

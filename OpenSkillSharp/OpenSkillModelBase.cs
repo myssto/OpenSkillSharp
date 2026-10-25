@@ -28,6 +28,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
     public bool Balance { get; set; }
 
+    public Tuple<double, double>? WeightBounds { get; set; } = new(1.0, 2.0);
+
     public IRating Rating(double? mu = null, double? sigma = null)
     {
         return new Rating.Rating { Mu = mu ?? Mu, Sigma = sigma ?? Sigma };
@@ -125,7 +127,11 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         }
 
         // * Normalize weights
-        weights = weights?.Select(w => w.Normalize(1, 2)).ToList();
+        if (weights is not null && WeightBounds is not null)
+        {
+            (double min, double max) = WeightBounds;
+            weights = weights.Select(w => w.Normalize(min, max)).ToList();
+        }
 
         IList<double>? tenet = null;
         if (ranks is not null)
