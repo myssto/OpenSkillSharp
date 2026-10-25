@@ -30,7 +30,7 @@ Start using the models by creating an instance of your desired model.
 PlackettLuce model = new();
 
 // Or customize to your needs
-ThurstoneMostellerPart model = new()
+PlackettLuce model = new()
 {
   Mu = 28.67,
   Sigma = 8.07,
@@ -47,9 +47,11 @@ standard deviation. Create these using your model:
 ```cs
 PlackettLuce model = new();
 
+// Produces a rating with the values configured on the model
 IRating a1 = model.Rating();
 >> {Rating} {Mu: 25, Sigma: 8.33148112355601}
 
+// Or provide overrides to the model's default values
 IRating a2 = model.Rating(mu: 32.444, sigma: 5.123);
 >> {Rating} {Mu: 32.444, Sigma: 5.123}
 
@@ -81,7 +83,7 @@ result[1].Players
 >> {Rating} {Mu: 23.149503312339064, Sigma: 6.1378606973362135}
 ```
 
-When displaying a rating or sorting a list of ratings you can use the `IRating.Ordinal` getter.
+When displaying a rating or sorting a list of ratings, you can use the `IRating.Ordinal` getter.
 
 ```cs
 PlackettLuce model = new();
@@ -91,14 +93,14 @@ player.Ordinal
 >> 35.81
 ```
 
-By default, this returns `mu - 3 * sigma`, reresenting a rating for which there is
-a [99.7%](https://en.wikipedia.org/wiki/68–95–99.7_rule) likelihood that the player's true rating is higher so with
-early games, a player's ordinal rating will usually rise, and can rise even if that player were to lose.
+By default, this returns `mu - 3 * sigma`, representing a rating for which there is
+a [99.7%](https://en.wikipedia.org/wiki/68–95–99.7_rule) likelihood that the player's true rating is higher, so with
+early games, a player's ordinal rating will usually rise and can rise even if that player were to lose.
 
 ### Predicting Winners
 
-For a given match of any number of teams, using `IOpenSkillModel.PredictWin()` will produce a list of relative odds that
-each of those teams will win.
+For a given match containing any number of teams, using `IOpenSkillModel.PredictWin()` will produce a list of
+relative odds that each of those teams will win.
 
 ```cs
 PlackettLuce model = new();
@@ -116,7 +118,8 @@ probabilities.Sum();
 ### Predicting Draws
 
 Similarly to win prediction, using `IOpenSkillModel.PredictDraw()` will produce a single number representing the
-relative chance that the given teams will draw their match. The probability here should be treated as relative to other
+relative chance that the given teams will draw their match. The produced probability should be treated as relative to
+other
 matches, but in reality the odds of an actual legal draw will be impacted by some meta-function based on the rules of
 the game.
 
@@ -132,29 +135,32 @@ typically scales the best. That considered, there are other models available wit
 
 - Bradley-Terry rating models follow a logistic distribution over a player's skill, similar to Glicko.
 - Thurstone-Mosteller rating models follow a gaussian distribution similar to TrueSkill. Gaussian CDF/PDF functions
-  differ in implementation from system to system and the accuracy of this model isn't typically as great as others but
-  it can be tuned with custom gamma functions if you choose to do so.
-- Full pairing models should have more accurate ratings over partial pairing models, however in high _k_ games (for
-  example a 100+ person marathon), Bradley-Terry and Thurstone-Mosteller models need to do a joint probability
+  differ in implementation from system to system, and the accuracy of this model isn't typically as great as others, but
+  it can be tuned with a custom gamma function if you choose to do so.
+- Full pairing models should have more accurate ratings over partial pairing models; however, in high _k_ games (for
+  example, a 100+ person marathon), Bradley-Terry and Thurstone-Mosteller models need to do a joint probability
   calculation which involves a computationally expensive _k_-1 dimensional integration. In the case where players only
   change based on their neighbors, partial pairing is desirable.
 
 ## References
 
-This project is largely ported from the [openskill.py](https://github.com/vivekjoshy/openskill.py) package with changes
-made to bring the code style more in line with idiomatic C# principles. The vast majority of the unit tests and data for
-them were taken from the python package, as well as the [openskill.js](https://github.com/philihp/openskill.js) package.
-All of the Weng-Lin models are based off the research from this [paper](https://jmlr.org/papers/v12/weng11a.html) or are
-derivatives of the algorithms found in it.
+This project is largely ported from the [openskill.py] package, with changes made to bring the code style more in line
+with idiomatic C# principles. The vast majority of the unit tests and data for them were taken from the aforementioned
+python package, as well as the [openskill.js] package. All Weng-Lin models are based off the research found in
+this [paper](https://jmlr.org/papers/v12/weng11a.html) or are derivatives of the algorithms in it.
 
 - Julia Ibstedt, Elsa Rådahl, Erik Turesson, and Magdalena vande Voorde. Application and further development of
   trueskill™ ranking in sports. 2019.
-- Ruby C. Weng and Chih-Jen Lin. A bayesian approximation method for online ranking. Journal of Machine Learning
+- Ruby C. Weng and Chih-Jen Lin. A bayesian approximation method for online ranking. Journal of Machine Learning
   Research, 12(9):267–300, 2011. URL: http://jmlr.org/papers/v12/weng11a.html.
 
 If you are struggling with any concepts or are looking for more in-depth usage documentation, it is highly recommended
-to take a look at the official python documentation [here](https://openskill.me/en/stable/), as the projects are
-incredibly similar in structure and you will find that most examples will apply to this library as well.
+to take a look at the [openskill.py documentation](https://openskill.me/en/stable/). This library was structured
+incredibly similarly to it, and you will find that most usage examples will also be applicable to this library.
+
+Last commit of ported [openskill.py] code: [
+`8a979c6ebff99f2792267a171c196d189226200f`](https://github.com/vivekjoshy/openskill.py/commit/8a979c6ebff99f2792267a171c196d189226200f)
+(01/11/2026)
 
 ## Implementations in other Languages
 
@@ -164,3 +170,6 @@ incredibly similar in structure and you will find that most examples will apply 
 - [Java](https://github.com/pocketcombats/openskill-java)
 - [Kotlin](https://github.com/brezinajn/openskill.kt)
 - [Lua](https://github.com/bstummer/openskill.lua)
+
+[openskill.py]: https://github.com/vivekjoshy/openskill.py
+[openskill.js]: https://github.com/philihp/openskill.js
