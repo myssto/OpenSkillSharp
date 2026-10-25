@@ -59,6 +59,14 @@ public interface IOpenSkillModel
     bool Balance { get; set; }
 
     /// <summary>
+    /// Tuple of (min, max) bounds for normalizing player weights within a team. Weights are scaled to this range.
+    /// <br/>
+    /// <br/>
+    /// The default value is <c>(1.0, 2.0)</c>. Can be set to <see langword="null"/> to disable weight normalization.
+    /// </summary>
+    Tuple<double, double>? WeightBounds { get; set; }
+
+    /// <summary>
     /// Creates a new rating object with the configured defaults for this model. The given parameters can
     /// override the defaults for this model, but it is not recommended unless you know what you are doing.
     /// </summary>
@@ -92,6 +100,20 @@ public interface IOpenSkillModel
     /// <returns>
     /// A list of teams where each team contains a list of updated rating objects.
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown for various combinations of argument usage.
+    /// <br/>
+    /// If the size of <paramref name="teams"/> is less than 2, or if any team contains zero
+    /// <see cref="ITeam.Players">Players</see>.
+    /// <br/>
+    /// If <paramref name="ranks"/> is not <see langword="null"/>, but is not equal in size to <paramref name="teams"/>.
+    /// If <paramref name="ranks"/> and <paramref name="scores"/> are both not <see langword="null"/>.
+    /// <br/>
+    /// If <paramref name="scores"/> is not <see langword="null"/>, but is not equal in size to <paramref name="teams"/>.
+    /// <br/>
+    /// If <paramref name="weights"/> is not <see langword="null"/>, but is not equal in size to <paramref name="teams"/>,
+    /// or each list of weights is not equal in size to the corresponding number of <see cref="ITeam.Players">Players</see>.
+    /// </exception>
     IEnumerable<ITeam> Rate(
         IList<ITeam> teams,
         IList<double>? ranks = null,
