@@ -1,5 +1,6 @@
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
+using OpenSkillSharp.Tests.TestingUtil;
 using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp.Tests;
@@ -61,31 +62,31 @@ public class ModelBaseTests
 
         // Ranks size mismatch
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 [1]
             )
         );
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 [1, 2, 3]
             )
         );
 
         // Scores size mismatch
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 scores: [1]
             )
         );
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 scores: [1, 2, 3]
             )
         );
 
         // Ranks and scores together
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 [1, 2],
                 [1, 2]
             )
@@ -93,17 +94,17 @@ public class ModelBaseTests
 
         // Weights size mismatch
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 weights: [[1]]
             )
         );
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 weights: [[1], [2], [3]]
             )
         );
         Assert.Throws<ArgumentException>(() => model.Rate(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating()] }],
+                model.MockTeams(2, 1),
                 weights: [[1], [2, 3, 4]]
             )
         );
@@ -119,20 +120,14 @@ public class ModelBaseTests
         IList<IList<double>> weights = [[0.5, 1.0, 2.0], [1.0, 1.0, 1.0]];
 
         List<ITeam> resultDefault = modelDefault.Rate(
-                [
-                    new Team { Players = [modelDefault.Rating(), modelDefault.Rating(), modelDefault.Rating()] },
-                    new Team { Players = [modelDefault.Rating(), modelDefault.Rating(), modelDefault.Rating()] }
-                ],
+                modelDefault.MockTeams(2, 3),
                 [1, 2],
                 weights: weights
             )
             .ToList();
 
         List<ITeam> resultNarrow = modelNarrow.Rate(
-                [
-                    new Team { Players = [modelNarrow.Rating(), modelNarrow.Rating(), modelNarrow.Rating()] },
-                    new Team { Players = [modelNarrow.Rating(), modelNarrow.Rating(), modelNarrow.Rating()] }
-                ],
+                modelNarrow.MockTeams(2, 3),
                 [1, 2],
                 weights: weights
             )
@@ -152,10 +147,7 @@ public class ModelBaseTests
         model.WeightBounds = null;
 
         List<ITeam> result = model.Rate(
-                [
-                    new Team { Players = [model.Rating(), model.Rating(), model.Rating()] },
-                    new Team { Players = [model.Rating(), model.Rating(), model.Rating()] }
-                ],
+                model.MockTeams(2, 3),
                 [1, 2],
                 weights: [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
             )
@@ -172,7 +164,7 @@ public class ModelBaseTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating(), model.Rating()] }]
+                [model.MockSingleTeam(1), model.MockSingleTeam(2)]
             )
             .ToList();
 
@@ -185,19 +177,7 @@ public class ModelBaseTests
     public void CalculateTeamSqrtSigma_5v5()
     {
         PlackettLuce model = new();
-        List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-                [
-                    new Team
-                    {
-                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                    },
-                    new Team
-                    {
-                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                    }
-                ]
-            )
-            .ToList();
+        List<ITeamRating> teamRatings = model.CalculateTeamRatings(model.MockTeams(2, 5)).ToList();
 
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
 
@@ -209,7 +189,7 @@ public class ModelBaseTests
     {
         PlackettLuce model = new();
         List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-                [new Team { Players = [model.Rating()] }, new Team { Players = [model.Rating(), model.Rating()] }]
+                [model.MockSingleTeam(1), model.MockSingleTeam(2)]
             )
             .ToList();
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
@@ -223,19 +203,7 @@ public class ModelBaseTests
     public void CalculateSumQ_5v5()
     {
         PlackettLuce model = new();
-        List<ITeamRating> teamRatings = model.CalculateTeamRatings(
-                [
-                    new Team
-                    {
-                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                    },
-                    new Team
-                    {
-                        Players = [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()]
-                    }
-                ]
-            )
-            .ToList();
+        List<ITeamRating> teamRatings = model.CalculateTeamRatings(model.MockTeams(2, 5)).ToList();
         double teamSqrtSigma = model.CalculateTeamSqrtSigma(teamRatings);
 
         List<double> sumQ = model.CalculateSumQ(teamRatings, teamSqrtSigma).ToList();
@@ -264,7 +232,7 @@ public class ModelBaseTests
             k,
             mu,
             sigmaSq,
-            [model.Rating(), model.Rating(), model.Rating(), model.Rating(), model.Rating()],
+            model.MockSingleTeam(5).Players,
             qRank,
             null
         );

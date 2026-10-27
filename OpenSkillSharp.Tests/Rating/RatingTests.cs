@@ -1,6 +1,7 @@
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
 using OpenSkillSharp.Tests.TestingUtil;
+using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp.Tests.Rating;
 
@@ -11,8 +12,8 @@ public class RatingTests
     {
         OpenSkillSharp.Rating.Rating rating = new();
 
-        Assert.Equal(25D, rating.Mu);
-        Assert.Equal(25D / 3, rating.Sigma);
+        Assert.Equal(ModelDefaults.Mu, rating.Mu);
+        Assert.Equal(ModelDefaults.Sigma, rating.Sigma);
     }
 
     [Fact]
@@ -20,8 +21,8 @@ public class RatingTests
     {
         IRating rating = new PlackettLuce().Rating();
 
-        Assert.Equal(25D, rating.Mu);
-        Assert.Equal(25D / 3, rating.Sigma);
+        Assert.Equal(ModelDefaults.Mu, rating.Mu);
+        Assert.Equal(ModelDefaults.Sigma, rating.Sigma);
     }
 
     [Fact]
@@ -49,8 +50,8 @@ public class RatingTests
         Assert.Equal(overrideMu, rating.Mu);
         Assert.Equal(overrideSigma, rating.Sigma);
         // Passing values to IOpenSkillModel.Rating() should be a pure operation and not modify the model
-        Assert.Equal(25D, model.Mu);
-        Assert.Equal(25D / 3, model.Sigma);
+        Assert.Equal(ModelDefaults.Mu, model.Mu);
+        Assert.Equal(ModelDefaults.Sigma, model.Sigma);
     }
 
     [Fact]
@@ -84,7 +85,7 @@ public class RatingTests
     [Fact]
     public void Clone_CreatesNewInstance()
     {
-        OpenSkillSharp.Rating.Rating rating = new() { Mu = 25, Sigma = 25D / 3 };
+        OpenSkillSharp.Rating.Rating rating = new();
 
         IRating clone = rating.Clone();
 

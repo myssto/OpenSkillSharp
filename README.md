@@ -152,7 +152,7 @@ this [paper](https://jmlr.org/papers/v12/weng11a.html) or are derivatives of the
 - Julia Ibstedt, Elsa Rådahl, Erik Turesson, and Magdalena vande Voorde. Application and further development of
   trueskill™ ranking in sports. 2019.
 - Ruby C. Weng and Chih-Jen Lin. A bayesian approximation method for online ranking. Journal of Machine Learning
-  Research, 12(9):267–300, 2011. URL: http://jmlr.org/papers/v12/weng11a.html.
+  Research, 12 (9):267–300, 2011. URL: http://jmlr.org/papers/v12/weng11a.html.
 
 If you are struggling with any concepts or are looking for more in-depth usage documentation, it is highly recommended
 to take a look at the [openskill.py documentation](https://openskill.me/en/stable/). This library was structured

@@ -6,13 +6,11 @@ public static class Assertions
 {
     public static void RatingResultsEqual(IEnumerable<ITeam> expected, IEnumerable<ITeam> actual)
     {
-        foreach ((int teamIdx, ITeam expectedTeam) in expected.Index())
-        {
-            foreach ((int playerIdx, IRating expectedPlayer) in expectedTeam.Players.Index())
-            {
-                RatingsEqual(expectedPlayer, actual.ElementAt(teamIdx).Players.ElementAt(playerIdx));
-            }
-        }
+        expected
+            .SelectMany(t => t.Players)
+            .Zip(actual.SelectMany(t => t.Players))
+            .ToList()
+            .ForEach(r => RatingsEqual(r.First, r.Second));
     }
 
     public static void RatingsEqual(IRating expected, IRating actual)

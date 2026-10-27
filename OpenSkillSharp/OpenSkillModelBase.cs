@@ -227,12 +227,11 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
         List<double> winProbabilities = teamRatings
             .Select((iTeam, iTeamIndex) => teamRatings
                 .Where((_, qTeamIndex) => iTeamIndex != qTeamIndex)
-                .Select(qTeam => Statistics.PhiMajor(
+                .Average(qTeam => Statistics.PhiMajor(
                         (iTeam.Mu - qTeam.Mu) /
                         Math.Sqrt((2 * BetaSq) + iTeam.SigmaSq + qTeam.SigmaSq)
                     )
                 )
-                .Average()
             )
             .ToList();
 
@@ -309,7 +308,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     /// <returns>A number representing the square root of the collective team sigma.</returns>
     public double CalculateTeamSqrtSigma(IList<ITeamRating> teamRatings)
     {
-        return Math.Sqrt(teamRatings.Select(t => t.SigmaSq + BetaSq).Sum());
+        return Math.Sqrt(teamRatings.Sum(t => t.SigmaSq + BetaSq));
     }
 
     /// <summary>
@@ -329,13 +328,12 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     )
     {
         // Calculate margin adjustment for team mu values if ranks are provided
-        List<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores).ToList();
+        IEnumerable<double> adjustedMus = CalculateMarginAdjustedMu(teamRatings, scores);
 
         return teamRatings.Select(qTeam => teamRatings
-            .Select((iTeam, iTeamIndex) => (iTeam, iTeamIndex))
-            .Where(x => x.iTeam.Rank >= qTeam.Rank)
-            .Select(x => Math.Exp(adjustedMus[x.iTeamIndex] / c))
-            .Sum()
+            .Zip(adjustedMus, (iTeam, iTeamAdjustedMu) => (iTeamRank: iTeam.Rank, iTeamAdjustedMu))
+            .Where(i => i.iTeamRank >= qTeam.Rank)
+            .Sum(i => Math.Exp(i.iTeamAdjustedMu / c))
         );
     }
 
@@ -459,22 +457,6 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// The default gamma calculation for all models.
-    /// </summary>
-    protected static double DefaultGamma(
-        double c,
-        double k,
-        double mu,
-        double sigmaSq,
-        IEnumerable<IRating> team,
-        double qRank,
-        IEnumerable<double>? weights
-    )
-    {
-        return Math.Sqrt(sigmaSq) / c;
     }
 
     /// <summary>

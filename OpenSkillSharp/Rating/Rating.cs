@@ -1,10 +1,12 @@
+using OpenSkillSharp.Util;
+
 namespace OpenSkillSharp.Rating;
 
 public class Rating : IRating
 {
-    public double Mu { get; set; } = 25D;
+    public double Mu { get; set; } = ModelDefaults.Mu;
 
-    public double Sigma { get; set; } = 25D / 3;
+    public double Sigma { get; set; } = ModelDefaults.Sigma;
 
     public double Ordinal => GetOrdinal();
 

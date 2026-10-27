@@ -78,33 +78,9 @@ public class EnumerableExtensionTests
     [Fact]
     public void Unwind_AllowsNonIntegerRanks()
     {
-        List<string> expectedOutput = new()
-        {
-            "d",
-            "a",
-            "c",
-            "b",
-            "f",
-            "e"
-        };
-        List<string> source = new()
-        {
-            "a",
-            "b",
-            "c",
-            "d",
-            "e",
-            "f"
-        };
-        List<double> rank = new()
-        {
-            0.28591,
-            0.42682,
-            0.35912,
-            0.21237,
-            0.60619,
-            0.47078
-        };
+        List<string> expectedOutput = ["d", "a", "c", "b", "f", "e"];
+        List<string> source = ["a", "b", "c", "d", "e", "f"];
+        List<double> rank = [0.28591, 0.42682, 0.35912, 0.21237, 0.60619, 0.47078];
 
         (IList<string> output, _) = rank.Unwind(source);
 
@@ -115,7 +91,7 @@ public class EnumerableExtensionTests
     public void Unwind_CanUndoRanking()
     {
         List<double> rank = Enumerable.Range(0, 100).Select(i => (double)i).ToList();
-        int[] source = rank.Select(r => Random.Shared.Next()).ToArray();
+        int[] source = rank.Select(_ => Random.Shared.Next()).ToArray();
         Random.Shared.Shuffle(source);
 
         (IList<int>? trans, IList<double>? tenet) = rank.Unwind(source);

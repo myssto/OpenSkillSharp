@@ -1,5 +1,6 @@
 using OpenSkillSharp.Models;
 using OpenSkillSharp.Rating;
+using OpenSkillSharp.Tests.TestingUtil;
 using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp.Tests.Util;
@@ -10,13 +11,7 @@ public class RatingExtensionTests
     public void CalculateRankings_GivenPartialScores_FallsBackToTeamIndex()
     {
         PlackettLuce model = new();
-        List<ITeam> teams =
-        [
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] }
-        ];
+        List<ITeam> teams = model.MockTeams(4, 1).ToList();
         List<double> scores = [1, 2, 3];
 
         List<double> ranks = teams.CalculateRankings(scores.Select(s => -s).ToList()).ToList();
@@ -28,13 +23,7 @@ public class RatingExtensionTests
     public void CalculateRankings_GivenInverseScores_ProperlyConvertsToRanks()
     {
         PlackettLuce model = new();
-        List<ITeam> teams =
-        [
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] }
-        ];
+        List<ITeam> teams = model.MockTeams(4, 1).ToList();
         List<double> scores = [3, 0, 2, 1];
 
         List<double> ranks = teams.CalculateRankings(scores.Select(s => -s).ToList()).ToList();
@@ -46,13 +35,7 @@ public class RatingExtensionTests
     public void CalculateRankings_GivenNoRanks_DefaultsToTeamIndex()
     {
         PlackettLuce model = new();
-        List<ITeam> teams =
-        [
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] },
-            new Team { Players = [model.Rating()] }
-        ];
+        List<ITeam> teams = model.MockTeams(4, 1).ToList();
 
         List<double> ranks = teams.CalculateRankings().ToList();
 
