@@ -15,11 +15,11 @@ namespace OpenSkillSharp.Tests;
 public class ModelBaseTests
 {
     /// <summary>
-    /// The one exception to the above remarks applies to testing the behavior of weight bounds. Even though the
-    /// <see cref="OpenSkillModelBase.Rate"/> method is concrete, the normalized weights have unique usage
-    /// across implementations of <see cref="OpenSkillModelBase.Compute"/>. That being said, the test setup
-    /// does not change across implementations and should yield the same result, so using a generic matrix
-    /// of the model types ensures parity.
+    /// The two exceptions to the above remarks apply to testing the behavior of weight bounds and ties.
+    /// Even though the <see cref="OpenSkillModelBase.Rate"/> method is concrete, the normalized weights
+    /// have unique usage across implementations of <see cref="OpenSkillModelBase.Compute"/>. That being said,
+    /// the test setup does not change across implementations and should yield the same result, so using a generic
+    /// matrix of the model types ensures parity.
     /// </summary>
     public static TheoryData<Type> ModelTypes => new()
     {
@@ -29,6 +29,20 @@ public class ModelBaseTests
         typeof(ThurstoneMostellerFull),
         typeof(ThurstoneMostellerPart)
     };
+
+    // Stacking multiple @pytest.mark.parametrize tags will create a test for every case in the cartesian product
+    // yes that is 600 cases for a single test
+    public static IEnumerable<object[]> TieTestData()
+    {
+        foreach (object[] modelType in ModelTypes)
+        foreach (double tieScore in new[] { -1, 0, 0.1, 10, 13.4 })
+        foreach (int nTeams in new[] { 2, 5, 10 })
+        foreach (int nPlayers in new[] { 1, 2, 5, 10 })
+        foreach (string tieType in new[] { "score", "rank" })
+        {
+            yield return [modelType[0], tieScore, nTeams, nPlayers, tieType];
+        }
+    }
 
     [Fact]
     public void ModelValues_Defaults()
@@ -159,6 +173,60 @@ public class ModelBaseTests
         Assert.Equal(muChanges[1], muChanges[2], 1e-6);
     }
 
+    [Theory]
+    [MemberData(nameof(TieTestData))]
+    public void Rate_Ties(
+        Type modelType,
+        double tieScore,
+        int nTeams,
+        int nPlayers,
+        string tieType
+    )
+    {
+        IOpenSkillModel model = (IOpenSkillModel)Activator.CreateInstance(modelType)!;
+        IList<ITeam> originalTeams = model.MockTeams(nTeams, nPlayers);
+        List<double> comparer = Enumerable.Range(0, nTeams).Select(_ => tieScore).ToList();
+
+        List<ITeam> resultTeams = tieType == "score"
+            ? model.Rate(originalTeams, scores: comparer).ToList()
+            : model.Rate(originalTeams, comparer).ToList();
+
+        List<(IRating playerBefore, IRating playerAfter)> result = originalTeams
+            .SelectMany(t => t.Players)
+            .Zip(resultTeams.SelectMany(t => t.Players), (playerBefore, playerAfter) => (playerBefore, playerAfter))
+            .ToList();
+
+        Assert.All(
+            result,
+            p =>
+            {
+                (IRating playerBefore, IRating playerAfter) = p;
+
+                // * All players should end with equal mu
+                Assert.Equal(playerBefore.Mu, playerAfter.Mu);
+                // * All players should end with lower or equal sigma
+                Assert.True(playerAfter.Sigma <= playerBefore.Sigma);
+            }
+        );
+    }
+
+    [Theory]
+    [MemberData(nameof(ModelTypes))]
+    public void Rate_Ties_CloseRatings(Type modelType)
+    {
+        IOpenSkillModel model = (IOpenSkillModel)Activator.CreateInstance(modelType)!;
+
+        List<ITeam> result = model.Rate(
+                [new Team { Players = [model.Rating(30)] }, new Team { Players = [model.Rating(20)] }],
+                [0, 0]
+            )
+            .ToList();
+
+        // * Ratings should converge on ties
+        Assert.True(result[0].Players.First().Mu < 30);
+        Assert.True(result[1].Players.First().Mu > 20);
+    }
+    
     [Fact]
     public void CalculateTeamSqrtSigma()
     {
