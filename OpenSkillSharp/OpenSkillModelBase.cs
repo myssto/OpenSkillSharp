@@ -163,7 +163,6 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
             finalResult = Compute(teams, weights: weights).ToList();
         }
 
-        // ReSharper disable once InvertIf
         if (LimitSigma)
         {
             foreach ((int teamIdx, ITeam team) in finalResult.Index())
@@ -204,7 +203,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
         int playerCount = teamRatings.SelectMany(t => t.Players).Count();
         double drawProbability = 1D / playerCount;
-        double drawMargin = Math.Sqrt(playerCount) * Beta * Statistics.InversePhiMajor((1 + drawProbability) / 2D);
+        double drawMargin = Math.Sqrt(playerCount) * Beta * Statistics.PhiMajorInverse((1 + drawProbability) / 2D);
 
         return teamRatings.SelectMany((teamA, i) =>
                 teamRatings
