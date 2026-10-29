@@ -34,13 +34,13 @@ public class ModelBaseTests
     // yes that is 600 cases for a single test
     public static IEnumerable<object[]> TieTestData()
     {
-        foreach (object[] modelType in ModelTypes)
+        foreach (TheoryDataRow<Type> modelType in ModelTypes)
         foreach (double tieScore in new[] { -1, 0, 0.1, 10, 13.4 })
         foreach (int nTeams in new[] { 2, 5, 10 })
         foreach (int nPlayers in new[] { 1, 2, 5, 10 })
         foreach (string tieType in new[] { "score", "rank" })
         {
-            yield return [modelType[0], tieScore, nTeams, nPlayers, tieType];
+            yield return [modelType.Data, tieScore, nTeams, nPlayers, tieType];
         }
     }
 
