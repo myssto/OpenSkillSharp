@@ -13,7 +13,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>ranking, rating, elo, trueskill, openskill, bayesian</PackageTags>
         <Copyright>Copyright (c) 2026 Patrick Lacni</Copyright>
-        <TargetFrameworks>net9.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
