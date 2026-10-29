@@ -3,23 +3,35 @@ using OpenSkillSharp.Util;
 
 namespace OpenSkillSharp;
 
+/// <summary>
+/// Interfaces an OpenSkill model.
+/// </summary>
 public interface IOpenSkillModel
 {
     /// <summary>
     /// Represents the initial belief about the skill of a player before any matches have been played.
     /// Known mostly as the mean of the Gaussian prior distribution.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.Mu"/>.
+    /// </remarks>
     double Mu { get; set; }
 
     /// <summary>
     /// Standard deviation of the prior distribution of the player.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.Sigma"/>.
+    /// </remarks>
     double Sigma { get; set; }
 
     /// <summary>
     /// Hyperparameter that determines the level of uncertainty or variability present in the prior
     /// distribution of ratings.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.Beta"/>.
+    /// </remarks>
     double Beta { get; set; }
 
     /// <summary>
@@ -31,21 +43,33 @@ public interface IOpenSkillModel
     /// Arbitrary, small, positive, real number that is used to prevent the variance of the posterior distribution
     /// from becoming too small or negative. It can also be thought of as a regularization parameter.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.Kappa"/>.
+    /// </remarks>
     double Kappa { get; set; }
 
     /// <summary>
-    /// Function used as the formula to calculate gamma.
+    /// Delegate function used as the formula to calculate gamma.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.Gamma"/>.
+    /// </remarks>
     GammaFactory Gamma { get; set; }
 
     /// <summary>
     /// Additive dynamics parameter that prevents sigma from getting too small to increase rating change volatility.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.Tau"/>.
+    /// </remarks>
     double Tau { get; set; }
 
     /// <summary>
     /// The margin of victory needed for a win to be considered impressive.
     /// </summary>
+    /// <remarks>
+    /// Default value of 0.
+    /// </remarks>
     double Margin { get; set; }
 
     /// <summary>
@@ -60,10 +84,11 @@ public interface IOpenSkillModel
 
     /// <summary>
     /// Tuple of (min, max) bounds for normalizing player weights within a team. Weights are scaled to this range.
-    /// <br/>
-    /// <br/>
-    /// The default value is <c>(1.0, 2.0)</c>. Can be set to <see langword="null"/> to disable weight normalization.
     /// </summary>
+    /// <remarks>
+    /// Default value supplied from <see cref="ModelDefaults.WeightBounds"/>.
+    /// Can be set to <see langword="null"/> to disable weight normalization.
+    /// </remarks>
     (double Min, double Max)? WeightBounds { get; set; }
 
     /// <summary>
@@ -127,6 +152,10 @@ public interface IOpenSkillModel
     /// </summary>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A list of numbers representing the odds of each team winning.</returns>
+    /// <exception cref="ArgumentException">
+    /// If the size of <paramref name="teams"/> is less than 2, or if any team contains zero
+    /// <see cref="ITeam.Players">Players</see>.
+    /// </exception>
     IEnumerable<double> PredictWin(IList<ITeam> teams);
 
     /// <summary>
@@ -138,6 +167,10 @@ public interface IOpenSkillModel
     /// </remarks>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A number representing the odds of a draw as a percentage from 0.0 to 1.0</returns>
+    /// <exception cref="ArgumentException">
+    /// If the size of <paramref name="teams"/> is less than 2, or if any team contains zero
+    /// <see cref="ITeam.Players">Players</see>.
+    /// </exception>
     double PredictDraw(IList<ITeam> teams);
 
     /// <summary>
@@ -145,5 +178,9 @@ public interface IOpenSkillModel
     /// </summary>
     /// <param name="teams">A list of two or more teams.</param>
     /// <returns>A list of tuples containing a team's predicted rank and the probability for each given team.</returns>
+    /// <exception cref="ArgumentException">
+    /// If the size of <paramref name="teams"/> is less than 2, or if any team contains zero
+    /// <see cref="ITeam.Players">Players</see>.
+    /// </exception>
     List<(int rank, double probability)> PredictRank(IList<ITeam> teams);
 }

@@ -44,23 +44,7 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
     )
     {
         // * Catch teams argument errors
-        if (teams.Count < 2)
-        {
-            throw new ArgumentException(
-                $"Argument '{nameof(teams)}' must have at least 2 teams, not {teams.Count}."
-            );
-        }
-
-        foreach ((int idx, int teamSize) in teams.Select(team => team.Players.Count()).Index())
-        {
-            if (teamSize < 1)
-            {
-                throw new ArgumentException(
-                    $"Argument '{nameof(teams)}' must have at least 1 player per team. " +
-                    $"Team at index {idx} contains {teamSize} players."
-                );
-            }
-        }
+        CheckTeams(teams);
 
         // * Catch ranks argument errors
         if (ranks is not null)
@@ -182,6 +166,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
     public IEnumerable<double> PredictWin(IList<ITeam> teams)
     {
+        CheckTeams(teams);
+        
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
         int n = teams.Count;
         int denominator = n * (n - 1) / 2;
@@ -199,6 +185,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
     public double PredictDraw(IList<ITeam> teams)
     {
+        CheckTeams(teams);
+        
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
 
         int playerCount = teamRatings.SelectMany(t => t.Players).Count();
@@ -221,6 +209,8 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
 
     public List<(int rank, double probability)> PredictRank(IList<ITeam> teams)
     {
+        CheckTeams(teams);
+        
         List<ITeamRating> teamRatings = CalculateTeamRatings(teams).ToList();
 
         List<double> winProbabilities = teamRatings
@@ -454,6 +444,35 @@ public abstract class OpenSkillModelBase : IOpenSkillModel
                 {
                     player.Mu = originalTeams[teamIndex].Players.ElementAt(playerIndex).Mu + avgMuChange;
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ensure the <paramref name="teams"/> argument is valid.
+    /// </summary>
+    /// <param name="teams">A list of teams in a game.</param>
+    /// <exception cref="ArgumentException">
+    /// If the size of <paramref name="teams"/> is less than 2, or if any team contains zero
+    /// <see cref="ITeam.Players">Players</see>.
+    /// </exception>
+    private static void CheckTeams(IList<ITeam> teams)
+    {
+        if (teams.Count < 2)
+        {
+            throw new ArgumentException(
+                $"Argument '{nameof(teams)}' must have at least 2 teams, not {teams.Count}."
+            );
+        }
+
+        foreach ((int idx, int teamSize) in teams.Select(team => team.Players.Count()).Index())
+        {
+            if (teamSize < 1)
+            {
+                throw new ArgumentException(
+                    $"Argument '{nameof(teams)}' must have at least 1 player per team. " +
+                    $"Team at index {idx} contains {teamSize} players."
+                );
             }
         }
     }
